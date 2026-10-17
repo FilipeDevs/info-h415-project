@@ -32,7 +32,7 @@ public class ObjectBoxDao implements BenchmarkDao {
             dir.mkdirs();
         }
 
-        BoxStoreBuilder builder = MyObjectBox.builder().directory(dir);
+        BoxStoreBuilder builder = MyObjectBox.builder().directory(dir).maxSizeInKByte(30L * 1024 * 1024);
 
         this.store = builder.build();
         this.playerBox = store.boxFor(Player.class);
