@@ -3,3 +3,11 @@
 *.out
 *.gz
 *.toc
+*.dll
+target
+db
+players_1000.json
+players_10000.json
+players_100000.json
+players_1000000.json
+main.pdf
