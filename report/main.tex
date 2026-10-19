@@ -62,10 +62,40 @@ The goal of this project is to study object-oriented databases and compare two d
 \subsection{PostgreSQL: The benchmark relational DBMS (Baseline)}
 
 \section{Use Cases and Domain Modeling}
+
 \subsection{Description of the application domain}
+The application domain selected for this benchmark is inspired by a multiplayer online role-playing game (RPG) system modeled after the Pokémon franchise. In this context, persistent storage must support two distinct categories of data:
+\begin{enumerate}
+    \item \textbf{Static reference data}: immutable entities representing Pokémon (with a name, a type, a speed, ...) and item definitions (name of the item and its description).
+    \item \textbf{Dynamic player state}: mutable user data tracking account credentials, active team selections, customized teams and inventory management.
+\end{enumerate}
+
+This domain serves as an ideal case study for comparing Object-Oriented Database Management Systems (OODBMS) with traditional Relational Database Management Systems (RDBMS). Player profiles exhibit a high degree of structural complexity, including nested collections of variable length (such as lists of team members or associations between inventory items and their quantities), object composition, and complex references between entities.
+
 \subsection{Conceptual schema and data models}
+
 \subsection{Software architecture}
+
 \subsection{Dataset generation}
+To evaluate scalability under realistic database workloads while adhering to rigorous benchmarking practices, a hybrid data generation strategy was implemented.
+
+\subsubsection{Authentic Reference Datasets}
+Rather than generating purely synthetic game entities, the static reference data was populated using real-world datasets extracted from an online database library (\emph{Kaggle}):
+\begin{itemize}
+    \item \texttt{pokemons.csv}\cite{kaggle_pokemon}: Contains 800 Pokémon with complete attributes (\texttt{HP}, \texttt{Attack}, \texttt{Defense}, \texttt{Sp. Atk}, \texttt{Sp. Def}, \texttt{Speed}, \texttt{Generation}, \texttt{Legendary}).
+    \item \texttt{items.csv}\cite{kaggle_item}: Contains 920 game items with names and descriptions.
+\end{itemize}
+
+\subsubsection{Deterministic Workload Generator}
+To simulate scalable player bases ($1\text{K}$, $10\text{K}$, $100\text{K}$, and $1\text{M}$ objects), a Java generator (\texttt{DatasetGenerator.java}) was constructed using a fixed seed (\texttt{SEED = 12345L}). This guarantees 100\% deterministic reproducibility across benchmarking runs.
+
+For each generated player profile:
+\begin{enumerate}
+    \item A unique identifier \texttt{Player\_i} is assigned as the player name (where $i \in \{1, \dots, N\}$ represents the $i$-th generated player), and \texttt{password\_hash} is populated using a deterministic hash derived from the player's name.
+    \item A random subset of $1$ to $10$ distinct Pokémon is assigned from the reference list without replacement.
+    \item $1$ to $10$ custom teams are constructed, each containing $1$ to $6$ member slots populated from the player's owned Pokémon.
+    \item An inventory is generated containing $1$ to $10$ distinct items with randomized quantities ranging from $1$ to $10$.
+\end{enumerate}
 
 \section{Experimentation and Benchmarking Protocol}
 \subsection{Benchmark environment}
@@ -87,5 +117,15 @@ The goal of this project is to study object-oriented databases and compare two d
 \section{Conclusion}
 
 \section{Bibliography and Appendices}
+
+\begin{thebibliography}{99}
+
+\bibitem{kaggle_pokemon}
+M.~Lomuscio, ``Pokémon Dataset,'' \emph{Kaggle}, 2017. [Online]. Available: \url{https://www.kaggle.com/datasets/mlomuscio/pokemon}. [Accessed: Oct. 17, 2026].
+
+\bibitem{kaggle_item}
+M.~O'Neill, ``Pokémon Sun and Moon (Gen 7) Stats,'' \emph{Kaggle}, 2016. [Online]. Available: \url{https://www.kaggle.com/datasets/mylesoneill/pokemon-sun-and-moon-gen-7-stats}. [Accessed: Oct. 17, 2026].
+
+\end{thebibliography}
 
 \end{document}
