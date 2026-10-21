@@ -8,6 +8,8 @@
 \usepackage{array}
 \usepackage{algorithmic}
 \usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, fit, backgrounds}
 
 \geometry{top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
 
@@ -51,10 +53,223 @@
 The goal of this project is to study object-oriented databases and compare two database management systems, ObjectDB and ObjectBox. Object-oriented databases are designed to store and manipulate objects directly, without needing to map application objects to relational tables. This project will present the fundamental concepts of object-oriented database technology and examine how they are implemented in ObjectDB and ObjectBox. A common application will be developed using both systems to perform a set of representative queries and updates. The performance of these operations will then be evaluated on datasets of different sizes to analyze the scalability of each system. Finally, the results will be compared with those obtained using a traditional relational database management system, in order to see the advantages and limitations of object-oriented databases, and determine if it is the technology of choice for the application.
 
 \section{Foundations of Object-Oriented Databases}
+
 \subsection{Origins and motivation}
+
+A lot of applications are built with object-oriented languages while storing their data in relational databases. The two models were designed around different principles, and the difficulties created by combining them are known as the \emph{object-relational impedance mismatch}.
+
+An object has its own identity, separate from the values it holds. Two objects containing exactly the same data are still two different objects, and an object remains the same object even if every one of its fields is modified. A row in a relational table works differently because it is identified by its primary key, which is part of the data. If that key is modified, the row becomes a different row, and two rows holding the same values cannot be told apart.
+
+Objects also point directly at one another. When an object holds a collection of other objects, accessing them only requires following a pointer.
+The relational model works only with values that happen to match. The link has to be stored as a foreign key, and rebuilt every time it is needed by joining two tables. What is a single step in the application becomes a whole operation on sets in the database.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    font=\small,
+    obj/.style={draw, rounded corners, align=center, inner sep=5pt,
+                minimum width=2.6cm, minimum height=0.9cm},
+    ptr/.style={-{Stealth[length=2.2mm]}, thick},
+    match/.style={-{Stealth[length=2.2mm]}, dashed, gray!70!black},
+    tbl/.style={draw, inner sep=0pt}
+]
+
+% ---------------- left: object graph ----------------
+\node[obj] (cust)  at (0,0)      {\texttt{Customer}};
+\node[obj] (order) at (0,-1.9)   {\texttt{Order}};
+\node[obj] (l1)    at (-1.5,-3.8){\texttt{Line}};
+\node[obj] (l2)    at ( 1.5,-3.8){\texttt{Line}};
+\draw[ptr] (order) -- (cust);
+\draw[ptr] (order) -- (l1);
+\draw[ptr] (order) -- (l2);
+
+\node[align=center, font=\footnotesize\itshape] at (0,-5)
+     {object graph\\(links are references)};
+
+% ---------------- right: tables ----------------
+\node[tbl] (tcust) at (7.5,0.1)
+  {\begin{tabular}{|l|l|}
+     \hline
+     \multicolumn{2}{|c|}{\textbf{customers}}\\
+     \hline
+     \texttt{id} & \texttt{name}\\
+     \hline
+   \end{tabular}};
+\node[tbl] (tord) at (7.5,-1.9)
+  {\begin{tabular}{|l|l|}
+     \hline
+     \multicolumn{2}{|c|}{\textbf{orders}}\\
+     \hline
+     \texttt{id} & \texttt{customer\_id}\\
+     \hline
+   \end{tabular}};
+\node[tbl] (tline) at (7.5,-3.9)
+  {\begin{tabular}{|l|l|}
+     \hline
+     \multicolumn{2}{|c|}{\textbf{lines}}\\
+     \hline
+     \texttt{id} & \texttt{order\_id}\\
+     \hline
+   \end{tabular}};
+\draw[match] (tord)  -- node[right, font=\footnotesize] {join} (tcust);
+\draw[match] (tline) -- node[right, font=\footnotesize] {join} (tord);
+\node[align=center, font=\footnotesize\itshape] at (7.5,-5)
+     {relational tables\\(links are matching values)};
+
+\end{tikzpicture}
+
+\caption{The same data as an object graph and as relational tables.}
+\label{fig:graph-vs-tables}
+\end{figure}
+
+Three other features of object oriented principles have no equivalent in the relational model. Inheritance has to be flattened onto tables, and there are several ways to do it, with each one trading storage space for query speed.
+Collections have to be moved into separate tables because a column can only hold one single value.
+Encapsulation also disappears since a table shows all of its columns to anyone allowed to read it.
+
+The result is that the application has to translate between the two models every time it reads or writes data. This translation is either written by hand or left to an object-relational mapping framework (ORM). Either way, it forms a layer that belongs neither to the application nor to the database, it has to be kept in step with the schema, and it brings problems of its own, such as loading far more data than was asked for, or running one query for every element of a collection.
+
+Object-oriented databases take a different approach. Rather than translating objects into another model, they store them as they are, which removes the middle layer entirely.
+
 \subsection{Fundamental Principles of Object-Oriented Database Management Systems}
+
+Object-oriented databases are built on a small number of ideas that together
+allow objects to be stored without being transformed. This section presents them
+one by one.
+
+\paragraph{Object identity:} Every object that is stored receives an \emph{object
+identifier} (OID). It is assigned by the database itself, it is unique and it
+never changes during the life of the object. Since it is independent of the
+values the object holds, two objects with the same content remain distinct, and
+an object can have all of its fields modified while still being recognised as the
+same object. This is what a primary key cannot provide.
+
+\paragraph{Complex objects:} An object is allowed to be \emph{complex}, which
+means it is not restricted to a single value for each of its attributes. An
+attribute can hold another object, or a list, a set or a map of objects, and
+those objects can in turn contain others. The structure that the application
+works with is therefore stored as it is, without being split across several
+tables and reassembled later.
+
+\paragraph{Inheritance:} Classes can be organised in a hierarchy, and the
+database is aware of it. A class inherits the attributes of its parent, and a
+query written for a parent class also returns the instances of its subclasses.
+The mapping strategies that the relational model requires for inheritance are not
+needed, because the hierarchy is part of the stored schema rather than something
+simulated on top of it.
+
+\paragraph{References:} Relationships between objects are stored as
+\emph{references}. An object holds a reference to another object, and following
+that reference is a direct operation that does not depend on the size of the
+database. Relationships can also be declared in both directions, in which case
+the database keeps the two sides consistent when one of them is modified.
+
+\paragraph{Persistence by reachability:} Saving an object saves everything it can
+reach. When an object is made persistent, the objects it references become
+persistent as well, and so on recursively. The application therefore stores a
+structure in one operation instead of saving each part in the right order.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    font=\small,
+    obj/.style={draw, rounded corners, align=center, inner sep=5pt,
+                minimum width=2.4cm, minimum height=0.9cm},
+    root/.style={obj, fill=gray!15, very thick},
+    ptr/.style={-{Stealth[length=2.2mm]}, thick}
+]
+
+\node[root] (order) at (0,0)      {\texttt{Order}};
+\node[obj]  (cust)  at (-2.4,-2)  {\texttt{Customer}};
+\node[obj]  (line)  at (2.4,-2)   {\texttt{Line}};
+\node[obj]  (prod)  at (2.4,-3.9) {\texttt{Product}};
+
+\draw[ptr] (order) -- (cust);
+\draw[ptr] (order) -- (line);
+\draw[ptr] (line)  -- (prod);
+
+\node[anchor=west, font=\footnotesize\itshape] at (1.4,0) {explicitly saved};
+
+\begin{scope}[on background layer]
+  \node[draw, dashed, rounded corners, inner sep=11pt,
+        fit=(cust)(line)(prod)] (reach) {};
+\end{scope}
+
+\node[anchor=north, font=\footnotesize\itshape] at (reach.south)
+     {stored as well, because they are reachable};
+
+\end{tikzpicture}
+\caption{Persistence by reachability}
+\label{fig:reachability}
+\end{figure}
+
+\paragraph{Navigation and queries:} Data can be accessed in two different
+ways. \emph{Navigation} starts from one object and follows its references, which
+suits operations that explore a known part of the structure. \emph{Declarative
+queries} describe a condition and let the database find the matching objects,
+which is suited for operations that search the whole database. Relational databases offer
+only the second, while object-oriented systems offer both.
+
+\paragraph{Transparent persistence:} An object read from the database is an
+ordinary object of the language, meaning that it is ready to be used directly and it is not a result that
+has to be converted first. Writing works the same way since modifying an object
+inside a transaction is enough for the change to be stored. The translation layer
+described in the previous section therefore disappears.
+
 \subsection{Standards and norms}
+
 \subsection{Relational Model (RDBMS) vs. Object-Oriented Model (OODBMS)}
+
+The two models can be compared on a small number of axes. Table~\ref{tab:comparison}
+summarises them, and the paragraphs below discuss the ones that matter most for
+this project.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|p{4.3cm}|p{4.3cm}|}
+\hline
+ & \textbf{Relational} & \textbf{Object-oriented}\\
+\hline
+Data model & tables of rows holding atomic values & objects holding attributes and collections\\
+\hline
+Identity & primary key taken from the data & identifier assigned by the system\\
+\hline
+Relationships & foreign keys, rebuilt by joins & references, followed in one step\\
+\hline
+Inheritance & mapped onto tables & part of the stored schema\\
+\hline
+Query language & SQL, standardised and universal & specific to each product\\
+\hline
+Schema evolution & mature tooling and migrations & depends on the product\\
+\hline
+Ecosystem & very large & small\\
+\hline
+\end{tabular}
+\caption{The two models compared.}
+\label{tab:comparison}
+\end{table}
+
+\paragraph{Cost of following a relationship:} The cost of a join grows with the
+number of rows involved, and an operation crossing several tables multiplies that
+cost. Following a reference reaches a known object instead, whatever the size of
+the database. The deeper the structure being traversed, the larger the difference
+should be.
+
+\paragraph{Expressing a query:} The relational model only offers declarative
+queries, but in a language that is standardised and supported by many tools.
+Object-oriented systems also offer navigation, which helps when the starting
+point is known, but their query languages differ from one product to another, so
+code written for one cannot be reused with another.
+
+\paragraph{Schema and evolution:} A relational schema is declared explicitly and
+modified with well-established tools. In an object-oriented database it is
+derived from the classes themselves, which removes a source of duplication, but
+changing those classes once data exists is handled differently by each product.
+
+\paragraph{Maturity of the ecosystem:} Relational systems are surrounded by
+decades of tooling and widespread skills. Object-oriented systems are few, with
+smaller communities, less documentation and little external tool support. This
+has little to do with the technical qualities of either model, but it weighs
+heavily on the choice made in practice, and the conclusion returns to it.
 
 \section{Overview of the DBMS Studied}
 \subsection{ObjectDB: Object DBMS for Java / JPA}
