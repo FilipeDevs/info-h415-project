@@ -3,3 +3,7 @@
 *.out
 *.gz
 *.toc
+*.nav
+*.snm
+*.run.xml
+*.bcf
