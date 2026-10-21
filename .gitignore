@@ -5,6 +5,7 @@
 *.toc
 *.dll
 target
+.idea
 db
 players_1000.json
 players_10000.json
