@@ -278,9 +278,9 @@ heavily on the choice made in practice, and the conclusion returns to it.
 \section{Use Cases and Domain Modeling}
 
 \subsection{Description of the application domain}
-The application domain selected for this benchmark is inspired by a multiplayer online role-playing game (RPG) system modeled after the Pokémon franchise. In this context, persistent storage must support two distinct categories of data:
+The application domain selected for this benchmark is inspired by a multiplayer online role-playing game (RPG) system modeled after the Pokemon franchise. In this context, persistent storage must support two distinct categories of data:
 \begin{enumerate}
-    \item \textbf{Static reference data}: immutable entities representing Pokémon (with a name, a type, a speed, ...) and item definitions (name of the item and its description).
+    \item \textbf{Static reference data}: immutable entities representing Pokemon (with a name, a type, a speed, ...) and item definitions (name of the item and its description).
     \item \textbf{Dynamic player state}: mutable user data tracking account credentials, active team selections, customized teams and inventory management.
 \end{enumerate}
 
@@ -288,7 +288,60 @@ This domain serves as an ideal case study for comparing Object-Oriented Database
 
 \subsection{Conceptual schema and data models}
 
+To compare the relational approach with implementations in object-oriented databases, the RPG domain model is represented using three distinct data modeling paradigms: a conceptual domain model, a normalized relational model, and object-oriented data models.
+
+\subsubsection{Conceptual Domain Model}
+Conceptually, the domain models player management and in-game inventory through relationships between entities and complex data structures:
+\begin{itemize}
+	\item \textbf{Player}: Represents a user account identified by a unique \texttt{playername}, storing an authentication hash (\texttt{passwordHash}), an active team reference (\texttt{currentTeam}), a collection of saved teams (\texttt{teams}), and an inventory mapping items to quantities.
+	\item \textbf{Team}: Defines a named user team (\texttt{name}) containing an ordered list of 1 to 6 Pokemon members.
+	\item \textbf{Pokemon}: Represents game creatures defined by base stats (\texttt{hp}, \texttt{attack}, \texttt{defense}, \texttt{spAtk}, \texttt{spDef}, \texttt{speed}), typing (\texttt{type1}, \texttt{type2}), generation, and legendary status.
+	\item \textbf{Item}: Represents consumable or collectible items with a unique \texttt{id}, \texttt{name}, and \texttt{description}.
+	\end{itemize}
+		
+		\subsubsection{Relational Data Model (PostgreSQL Baseline)}
+		In the relational model, object structures with nested collections and references must be decomposed into Third Normal Form (3NF) relational tables linked by foreign key constraints:
+		\begin{itemize}
+			\item \texttt{pokemons} \& \texttt{items}: Catalog tables holding static reference data indexed by primary keys (\texttt{id} and \texttt{item\_id}).
+			\item \texttt{players}: Stores user account details and holds a foreign key \texttt{(playername, current\_team)} referencing the player's active team in the \texttt{teams} table.
+			\item \texttt{teams}: Maps each team to its owner via \texttt{playername}, using a composite primary key \texttt{(playername, name)}.
+			\item \texttt{team\_members}: Junction table modeling the list of Pokemon within a team, storing \texttt{(playername, team\_name, pokemon\_id, slot\_position)}.
+			\item \texttt{item\_player}: Junction table representing player inventories, mapping \texttt{playername} and \texttt{item\_id} alongside an \texttt{amount} attribute.
+		\end{itemize}
+		
+		\subsubsection{Object-Oriented Data Model (ObjectDB / JPA)}
+		ObjectDB leverages standard Java Persistence API (JPA) annotations to persist an object graph directly, while preserving object integrity without resorting to relational normalization:
+		\begin{itemize}
+			\item \textbf{Entities vs. Embeddables}: \texttt{Player} and \texttt{Team} are declared as standalone persistent entities (\texttt{@Entity}). \texttt{Pokemon} and \texttt{Item} are lightweight value objects decorated with \texttt{@Embeddable}.
+			\item \textbf{Direct Collection \& Map Storage}: Player inventories are mapped directly as a key-value map using \texttt{@ElementCollection Map<Item, Integer>}. Team membership lists (\texttt{List}) are embedded directly within the parent \texttt{Team} instance.
+			\item \textbf{Object Relationships}: Relationships are defined using cascade options (\texttt{CascadeType.ALL}) associated with \texttt{@OneToMany} and \texttt{@OneToOne}, which enables full persistence by reachability when saving a \texttt{Player} object.
+		\end{itemize}
+		
+		\subsubsection{Embedded Object Data Model (ObjectBox)}
+		ObjectBox implements a standalone object-oriented storage system, optimized for low-latency embedded execution:
+		\begin{itemize}
+			\item \textbf{Relations}: Uses \texttt{ToOne} and \texttt{ToMany} smart relation wrappers to handle directed graph edges.
+			\item \textbf{Map Decomposition}: Because ObjectBox natively supports entity-to-entity relations rather than arbitrary key-value Java maps, inventories are explicitly modeled using an intermediate \texttt{InventoryEntry} entity containing a \texttt{ToOne} relation and an integer quantity field.
+		\end{itemize}
+
 \subsection{Software architecture}
+The system architecture is engineered to provide a strictly fair and reproducible evaluation across the benchmarked database systems. It decouples dataset generation, object model management, and database execution through modular design patterns.
+
+\subsubsection{Architectural Overview}
+The software adopts a multi-level architecture, structured around three key layers:
+\begin{enumerate}
+	\item \textbf{Data Generation Tier}: Reads static CSV files (\texttt{pokemons.csv}, \texttt{items.csv}) and deterministically constructs player object graphs serialized into JSON files (\texttt{DatasetGenerator}).
+	\item \textbf{DAO Layer (Data Access Object)}: Encapsulates database-specific persistence, retrieval, and schema management logic behind a common interface (\texttt{BenchmarkDao}).
+	\item \textbf{Benchmarking Engine}: Orchestrates dataset loading, database cleanup, transaction boundary controls, warm-up iterations, and the measurement of execution time (\texttt{BenchmarkRunner}).
+\end{enumerate}
+
+\subsubsection{Design Patterns and Implementation Details}
+% TODO: mettre à jour pour le reste des benchmarks (update et get)
+\begin{itemize}
+	\item \textbf{Data Access Object (DAO) Pattern}: The \texttt{BenchmarkDao} interface exposes four primary operations: \texttt{init()}, \texttt{clearDatabase()}, \texttt{insertPlayers(List)}, and \texttt{close()}. This abstraction guarantees that the benchmarking execution loop remains entirely decoupled from concrete persistence drivers.
+	\item \textbf{Relational Batch Optimizations}: The \texttt{PostgresDao} implementation utilizes JDBC prepared statement batching along with the \texttt{reRewriteBatchedInserts=true} connection property to optimize relational multi-row insertions.
+	\item \textbf{Object-Oriented Transaction Management}: \texttt{ObjectDbDao} manages persistence through an active JPA \texttt{EntityManager} transaction, utilizing cascade persistence to automatically persist complete player reachability graphs. \texttt{ObjectBoxDao} executes atomic batch put operations inside native \texttt{store.runInTx()} blocks.
+\end{itemize}
 
 \subsection{Dataset generation}
 To evaluate scalability under realistic database workloads while adhering to rigorous benchmarking practices, a hybrid data generation strategy was implemented.
@@ -296,7 +349,7 @@ To evaluate scalability under realistic database workloads while adhering to rig
 \subsubsection{Authentic Reference Datasets}
 Rather than generating purely synthetic game entities, the static reference data was populated using real-world datasets extracted from an online database library (\emph{Kaggle}):
 \begin{itemize}
-    \item \texttt{pokemons.csv}\cite{kaggle_pokemon}: Contains 800 Pokémon with complete attributes (\texttt{HP}, \texttt{Attack}, \texttt{Defense}, \texttt{Sp. Atk}, \texttt{Sp. Def}, \texttt{Speed}, \texttt{Generation}, \texttt{Legendary}).
+    \item \texttt{pokemons.csv}\cite{kaggle_pokemon}: Contains 800 Pokemon with complete attributes (\texttt{HP}, \texttt{Attack}, \texttt{Defense}, \texttt{Sp. Atk}, \texttt{Sp. Def}, \texttt{Speed}, \texttt{Generation}, \texttt{Legendary}).
     \item \texttt{items.csv}\cite{kaggle_item}: Contains 920 game items with names and descriptions.
 \end{itemize}
 
@@ -306,8 +359,8 @@ To simulate scalable player bases ($1\text{K}$, $10\text{K}$, $100\text{K}$, and
 For each generated player profile:
 \begin{enumerate}
     \item A unique identifier \texttt{Player\_i} is assigned as the player name (where $i \in \{1, \dots, N\}$ represents the $i$-th generated player), and \texttt{password\_hash} is populated using a deterministic hash derived from the player's name.
-    \item A random subset of $1$ to $10$ distinct Pokémon is assigned from the reference list without replacement.
-    \item $1$ to $10$ custom teams are constructed, each containing $1$ to $6$ member slots populated from the player's owned Pokémon.
+    \item A random subset of $1$ to $10$ distinct Pokemon is assigned from the reference list without replacement.
+    \item $1$ to $10$ custom teams are constructed, each containing $1$ to $6$ member slots populated from the player's owned Pokemon.
     \item An inventory is generated containing $1$ to $10$ distinct items with randomized quantities ranging from $1$ to $10$.
 \end{enumerate}
 
@@ -335,10 +388,10 @@ For each generated player profile:
 \begin{thebibliography}{99}
 
 \bibitem{kaggle_pokemon}
-M.~Lomuscio, ``Pokémon Dataset,'' \emph{Kaggle}, 2017. [Online]. Available: \url{https://www.kaggle.com/datasets/mlomuscio/pokemon}. [Accessed: Oct. 17, 2026].
+M.~Lomuscio, ``Pokemon Dataset,'' \emph{Kaggle}, 2017. [Online]. Available: \url{https://www.kaggle.com/datasets/mlomuscio/pokemon}. [Accessed: Oct. 17, 2026].
 
 \bibitem{kaggle_item}
-M.~O'Neill, ``Pokémon Sun and Moon (Gen 7) Stats,'' \emph{Kaggle}, 2016. [Online]. Available: \url{https://www.kaggle.com/datasets/mylesoneill/pokemon-sun-and-moon-gen-7-stats}. [Accessed: Oct. 17, 2026].
+M.~O'Neill, ``Pokemon Sun and Moon (Gen 7) Stats,'' \emph{Kaggle}, 2016. [Online]. Available: \url{https://www.kaggle.com/datasets/mylesoneill/pokemon-sun-and-moon-gen-7-stats}. [Accessed: Oct. 17, 2026].
 
 \end{thebibliography}
 
