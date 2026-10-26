@@ -14,9 +14,9 @@ public class Player {
     @Index
     private String playername;
     private String passwordHash;
-    private ToOne<Team> currentTeam = new ToOne<>(this, Player_.currentTeam);
-    private ToMany<Team> teams = new ToMany<>(this, Player_.teams);
-    private ToMany<InventoryEntry> inventoryItemsCount = new ToMany<>(this, Player_.inventoryItemsCount);
+    private ToOne<Team> currentTeam;
+    private ToMany<Team> teams;
+    private ToMany<InventoryEntry> inventoryItemsCount;
 
     public Player() {
     }

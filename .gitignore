@@ -4,6 +4,7 @@
 *.gz
 *.toc
 *.dll
+*.dylib
 target
 .idea
 db

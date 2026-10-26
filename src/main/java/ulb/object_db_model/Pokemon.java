@@ -5,18 +5,21 @@ import javax.persistence.Embeddable;
 
 @Embeddable
 public class Pokemon {
-    private final int id;
-    private final String name;
-    private final String type1;
-    private final String type2;
-    private final int hp;
-    private final int attack;
-    private final int defense;
-    private final int spAtk;
-    private final int spDef;
-    private final int speed;
-    private final int generation;
-    private final boolean legendary;
+    private int id;
+    private String name;
+    private String type1;
+    private String type2;
+    private int hp;
+    private int attack;
+    private int defense;
+    private int spAtk;
+    private int spDef;
+    private int speed;
+    private int generation;
+    private boolean legendary;
+
+    protected Pokemon() {
+    }
 
     public Pokemon(int id, String name, String type1, String type2, int hp, int attack, int defense, int spAtk,
             int spDef, int speed, int generation, boolean legendary) {
