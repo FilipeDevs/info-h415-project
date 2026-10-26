@@ -3,10 +3,13 @@ package ulb.dao;
 import io.objectbox.Box;
 import io.objectbox.BoxStore;
 import io.objectbox.BoxStoreBuilder;
+import io.objectbox.query.Query;
+import io.objectbox.query.QueryBuilder.StringOrder;
 import ulb.object_box_model.InventoryEntry;
 import ulb.object_box_model.Item;
 import ulb.object_box_model.MyObjectBox;
 import ulb.object_box_model.Player;
+import ulb.object_box_model.Player_;
 import ulb.object_box_model.Pokemon;
 import ulb.object_box_model.Team;
 
@@ -103,6 +106,58 @@ public class ObjectBoxDao implements BenchmarkDao {
 
         // Transaction d'insertion par lot
         store.runInTx(() -> playerBox.put(obxPlayers));
+    }
+
+    @Override
+    public int getPlayerWithRelations(String playername) {
+        Query<Player> query = playerBox.query().equal(Player_.playername, playername, StringOrder.CASE_SENSITIVE)
+                .build();
+        try {
+            Player player = query.findFirst();
+            if (player == null) {
+                throw new IllegalArgumentException("Player not found: " + playername);
+            }
+
+            int relatedObjects = 0;
+            if (player.getCurrentTeam().getTarget() != null) {
+                relatedObjects++;
+            }
+            for (Team team : player.getTeams()) {
+                relatedObjects++;
+                relatedObjects += team.getMembers().size();
+            }
+            for (InventoryEntry entry : player.getInventoryItemsCount()) {
+                if (entry.getItem().getTarget() != null) {
+                    entry.getItem().getTarget().getName();
+                    relatedObjects++;
+                }
+            }
+            return relatedObjects;
+        } finally {
+            query.close();
+        }
+    }
+
+    @Override
+    public void updateInventoryAmount(String playername, String itemName, int amount) {
+        Query<Player> query = playerBox.query().equal(Player_.playername, playername, StringOrder.CASE_SENSITIVE)
+                .build();
+        try {
+            Player player = query.findFirst();
+            if (player == null) {
+                throw new IllegalArgumentException("Player not found: " + playername);
+            }
+            InventoryEntry matchingEntry = player.getInventoryItemsCount().stream()
+                    .filter(entry -> entry.getItem().getTarget() != null
+                            && itemName.equals(entry.getItem().getTarget().getName()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Inventory item not found for player: " + playername + ", " + itemName));
+            matchingEntry.setAmount(amount);
+            store.runInTx(() -> store.boxFor(InventoryEntry.class).put(matchingEntry));
+        } finally {
+            query.close();
+        }
     }
 
     @Override

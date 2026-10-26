@@ -175,6 +175,61 @@ public class PostgresDao implements BenchmarkDao {
         }
     }
 
+    @Override
+    public int getPlayerWithRelations(String playername) throws Exception {
+        String sql = """
+                SELECT p.playername, t.name, tm.pokemon_id, ip.item_id, ip.amount
+                FROM players p
+                LEFT JOIN teams t ON t.playername = p.playername
+                LEFT JOIN team_members tm ON tm.playername = t.playername AND tm.team_name = t.name
+                LEFT JOIN item_player ip ON ip.playername = p.playername
+                WHERE p.playername = ?
+                """;
+
+        int rows = 0;
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, playername);
+            try (var resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    resultSet.getString(1);
+                    resultSet.getString(2);
+                    resultSet.getObject(3);
+                    resultSet.getObject(4);
+                    resultSet.getObject(5);
+                    rows++;
+                }
+            }
+        }
+        if (rows == 0) {
+            throw new IllegalArgumentException("Player not found: " + playername);
+        }
+        return rows;
+    }
+
+    @Override
+    public void updateInventoryAmount(String playername, String itemName, int amount) throws Exception {
+        String sql = """
+                UPDATE item_player ip
+                SET amount = ?
+                FROM items i
+                WHERE ip.playername = ? AND ip.item_id = i.item_id AND i.name = ?
+                """;
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, amount);
+            statement.setString(2, playername);
+            statement.setString(3, itemName);
+            if (statement.executeUpdate() != 1) {
+                throw new IllegalArgumentException(
+                        "Inventory item not found for player: " + playername + ", " + itemName);
+            }
+            connection.commit();
+        } catch (Exception e) {
+            connection.rollback();
+            throw e;
+        }
+    }
+
     private void executeAllBatches(PreparedStatement psPlayer,
             PreparedStatement psTeam, PreparedStatement psTeamMember,
             PreparedStatement psUpdatePlayerTeam, PreparedStatement psItemPlayer) throws Exception {
