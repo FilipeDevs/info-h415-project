@@ -9,7 +9,7 @@ public class InventoryEntry {
     @Id
     public long id;
 
-    private ToOne<Item> item = new ToOne<>(this, InventoryEntry_.item);
+    private ToOne<Item> item;
     private int amount;
 
     public InventoryEntry() {

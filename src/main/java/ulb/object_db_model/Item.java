@@ -4,9 +4,12 @@ import javax.persistence.Embeddable;
 
 @Embeddable
 public class Item {
-    private final int id;
-    private final String name;
-    private final String description;
+    private int id;
+    private String name;
+    private String description;
+
+    protected Item() {
+    }
 
     public Item(int id, String name, String description) {
         this.id = id;

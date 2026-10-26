@@ -10,7 +10,7 @@ public class Team {
     public long id;
 
     private String name;
-    private ToMany<Pokemon> members = new ToMany<>(this, Team_.members);
+    private ToMany<Pokemon> members;
 
     public Team() {
     }

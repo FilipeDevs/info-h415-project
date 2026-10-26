@@ -8,6 +8,7 @@
 *.run.xml
 *.bcf
 *.dll
+*.dylib
 target
 .idea
 db

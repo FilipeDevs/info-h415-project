@@ -14,7 +14,10 @@ import ulb.object_box_model.Pokemon;
 import ulb.object_box_model.Team;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -34,11 +37,24 @@ public class ObjectBoxDao implements BenchmarkDao {
         if (!dir.exists()) {
             dir.mkdirs();
         }
+        try (var paths = Files.walk(dir.toPath())) {
+            paths.filter(path -> !path.equals(dir.toPath()))
+                    .sorted(Comparator.reverseOrder())
+                    .forEach(this::deletePath);
+        }
 
         BoxStoreBuilder builder = MyObjectBox.builder().directory(dir).maxSizeInKByte(30L * 1024 * 1024);
 
         this.store = builder.build();
         this.playerBox = store.boxFor(Player.class);
+    }
+
+    private void deletePath(Path path) {
+        try {
+            Files.delete(path);
+        } catch (Exception e) {
+            throw new IllegalStateException("Unable to reset ObjectBox database: " + path, e);
+        }
     }
 
     @Override

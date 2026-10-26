@@ -26,7 +26,7 @@ import ulb.object_db_model.Player;
 public class Main {
 
     // Connection configuration for the Database systems
-    private static final String PG_URL = "jdbc:postgresql://localhost:5432/pokemon_db?reRewriteBatchedInserts=true";
+    private static final String PG_URL = "jdbc:postgresql://martingouv.duckdns.org:5432/pokemon_db?reRewriteBatchedInserts=true";
     private static final String PG_USER = "postgres";
     private static final String PG_PASSWORD = "postgres_password";
     private static final String OBJECTDB_PATH = "db/objectdb_benchmark.odb";
@@ -63,9 +63,9 @@ public class Main {
             // Benchmark PostgreSQL
             try (PostgresDao pgDao = new PostgresDao(PG_URL, PG_USER, PG_PASSWORD)) {
                 pgDao.init();
-                //double avgTime = benchmarkRunner.runInsertionBenchmark(pgDao, () -> loadDataset(jsonPath), "PostgreSQL",
-                //        size);
-                //results.add(new BenchmarkResult("INSERT", "PostgreSQL", size, avgTime));
+                double avgTime = benchmarkRunner.runInsertionBenchmark(pgDao, () -> loadDataset(jsonPath), "PostgreSQL",
+                        size);
+                results.add(new BenchmarkResult("INSERT", "PostgreSQL", size, avgTime));
                 runReadAndUpdateBenchmarks(benchmarkRunner, pgDao, dataset, "PostgreSQL", size, results);
             } catch (Exception e) {
                 System.err.println("Error during PostgreSQL benchmark : " + e.getMessage());
@@ -74,9 +74,9 @@ public class Main {
             // Benchmark ObjectDB
             try (ObjectDbDao odbDao = new ObjectDbDao(OBJECTDB_PATH)) {
                 odbDao.init();
-                //double avgTime = benchmarkRunner.runInsertionBenchmark(odbDao, () -> loadDataset(jsonPath), "ObjectDB",
-                //        size);
-                //results.add(new BenchmarkResult("INSERT", "ObjectDB", size, avgTime));
+                double avgTime = benchmarkRunner.runInsertionBenchmark(odbDao, () -> loadDataset(jsonPath), "ObjectDB",
+                        size);
+                results.add(new BenchmarkResult("INSERT", "ObjectDB", size, avgTime));
                 runReadAndUpdateBenchmarks(benchmarkRunner, odbDao, dataset, "ObjectDB", size, results);
             } catch (Exception e) {
                 System.err.println("Error during ObjectDB benchmark : " + e.getMessage());
@@ -85,9 +85,9 @@ public class Main {
             // Benchmark ObjectBox
             try (ObjectBoxDao obxDao = new ObjectBoxDao(OBJECTBOX_DIR)) {
                 obxDao.init();
-                //double avgTime = benchmarkRunner.runInsertionBenchmark(obxDao, () -> loadDataset(jsonPath), "ObjectBox",
-                //        size);
-                //results.add(new BenchmarkResult("INSERT", "ObjectBox", size, avgTime));
+                double avgTime = benchmarkRunner.runInsertionBenchmark(obxDao, () -> loadDataset(jsonPath), "ObjectBox",
+                        size);
+                results.add(new BenchmarkResult("INSERT", "ObjectBox", size, avgTime));
                 runReadAndUpdateBenchmarks(benchmarkRunner, obxDao, dataset, "ObjectBox", size, results);
             } catch (Exception e) {
                 System.err.println("Error during ObjectBox benchmark : " + e.getMessage());
