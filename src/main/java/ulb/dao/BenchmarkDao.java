@@ -11,6 +11,10 @@ public interface BenchmarkDao extends AutoCloseable {
 
     void insertPlayers(List<Player> players) throws Exception;
 
+    int getPlayerWithRelations(String playername) throws Exception;
+
+    void updateInventoryAmount(String playername, String itemName, int amount) throws Exception;
+
     @Override
     void close() throws Exception;
 }

@@ -48,4 +48,55 @@ public class BenchmarkRunner {
                 average);
         return average;
     }
+
+    public double runGetBenchmark(BenchmarkDao dao, String playername, String systemName, int datasetSize) {
+        return runTimedBenchmark("GET", systemName, datasetSize, i -> {
+            int loadedObjects = dao.getPlayerWithRelations(playername);
+            if (loadedObjects <= 0) {
+                throw new IllegalStateException("GET returned no related objects");
+            }
+        });
+    }
+
+    public double runUpdateBenchmark(BenchmarkDao dao, String playername, String itemName, String systemName,
+            int datasetSize) {
+        return runTimedBenchmark("UPDATE", systemName, datasetSize,
+                i -> dao.updateInventoryAmount(playername, itemName, 100 + i));
+    }
+
+    private double runTimedBenchmark(String operation, String systemName, int datasetSize, BenchmarkOperation benchmark)
+            throws RuntimeException {
+        System.out.println("\n==========================================");
+        System.out.printf("Start of the %s benchmark for [%s] with %d players%n", operation, systemName, datasetSize);
+        System.out.println("==========================================");
+
+        List<Long> durations = new ArrayList<>();
+        for (int i = 1; i <= RUNS_COUNT; i++) {
+            try {
+                long startTime = System.nanoTime();
+                benchmark.run(i);
+                long durationMs = (System.nanoTime() - startTime) / 1_000_000;
+
+                if (i == 1) {
+                    System.out.printf("Run 1 (WARM-UP - Ignored) : %d ms%n", durationMs);
+                } else {
+                    System.out.printf("Run %d : %d ms%n", i, durationMs);
+                    durations.add(durationMs);
+                }
+            } catch (Exception e) {
+                System.err.printf("Error during execution %d : %s%n", i, e.getMessage());
+                throw new RuntimeException(e);
+            }
+        }
+
+        double average = durations.stream().mapToLong(Long::longValue).average().orElse(0.0);
+        System.out.printf("--> Average %s time for %s (%d items) : %.2f ms%n", operation, systemName, datasetSize,
+                average);
+        return average;
+    }
+
+    @FunctionalInterface
+    private interface BenchmarkOperation {
+        void run(int iteration) throws Exception;
+    }
 }

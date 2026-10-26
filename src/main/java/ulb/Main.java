@@ -63,9 +63,10 @@ public class Main {
             // Benchmark PostgreSQL
             try (PostgresDao pgDao = new PostgresDao(PG_URL, PG_USER, PG_PASSWORD)) {
                 pgDao.init();
-                double avgTime = benchmarkRunner.runInsertionBenchmark(pgDao, () -> loadDataset(jsonPath), "PostgreSQL",
-                        size);
-                results.add(new BenchmarkResult("PostgreSQL", size, avgTime));
+                //double avgTime = benchmarkRunner.runInsertionBenchmark(pgDao, () -> loadDataset(jsonPath), "PostgreSQL",
+                //        size);
+                //results.add(new BenchmarkResult("INSERT", "PostgreSQL", size, avgTime));
+                runReadAndUpdateBenchmarks(benchmarkRunner, pgDao, dataset, "PostgreSQL", size, results);
             } catch (Exception e) {
                 System.err.println("Error during PostgreSQL benchmark : " + e.getMessage());
             }
@@ -73,9 +74,10 @@ public class Main {
             // Benchmark ObjectDB
             try (ObjectDbDao odbDao = new ObjectDbDao(OBJECTDB_PATH)) {
                 odbDao.init();
-                double avgTime = benchmarkRunner.runInsertionBenchmark(odbDao, () -> loadDataset(jsonPath), "ObjectDB",
-                        size);
-                results.add(new BenchmarkResult("ObjectDB", size, avgTime));
+                //double avgTime = benchmarkRunner.runInsertionBenchmark(odbDao, () -> loadDataset(jsonPath), "ObjectDB",
+                //        size);
+                //results.add(new BenchmarkResult("INSERT", "ObjectDB", size, avgTime));
+                runReadAndUpdateBenchmarks(benchmarkRunner, odbDao, dataset, "ObjectDB", size, results);
             } catch (Exception e) {
                 System.err.println("Error during ObjectDB benchmark : " + e.getMessage());
             }
@@ -83,9 +85,10 @@ public class Main {
             // Benchmark ObjectBox
             try (ObjectBoxDao obxDao = new ObjectBoxDao(OBJECTBOX_DIR)) {
                 obxDao.init();
-                double avgTime = benchmarkRunner.runInsertionBenchmark(obxDao, () -> loadDataset(jsonPath), "ObjectBox",
-                        size);
-                results.add(new BenchmarkResult("ObjectBox", size, avgTime));
+                //double avgTime = benchmarkRunner.runInsertionBenchmark(obxDao, () -> loadDataset(jsonPath), "ObjectBox",
+                //        size);
+                //results.add(new BenchmarkResult("INSERT", "ObjectBox", size, avgTime));
+                runReadAndUpdateBenchmarks(benchmarkRunner, obxDao, dataset, "ObjectBox", size, results);
             } catch (Exception e) {
                 System.err.println("Error during ObjectBox benchmark : " + e.getMessage());
             }
@@ -93,6 +96,19 @@ public class Main {
 
         printSummaryTable(results);
         exportResultsToCsv(results, "results_benchmark.csv");
+    }
+
+    private static void runReadAndUpdateBenchmarks(BenchmarkRunner benchmarkRunner, ulb.dao.BenchmarkDao dao,
+            List<Player> dataset, String systemName, int datasetSize, List<BenchmarkResult> results) {
+        Player targetPlayer = dataset.get(0);
+        String itemName = targetPlayer.getInventory().keySet().iterator().next().getName();
+
+        double getTime = benchmarkRunner.runGetBenchmark(dao, targetPlayer.getPlayername(), systemName, datasetSize);
+        results.add(new BenchmarkResult("GET", systemName, datasetSize, getTime));
+
+        double updateTime = benchmarkRunner.runUpdateBenchmark(dao, targetPlayer.getPlayername(), itemName, systemName,
+                datasetSize);
+        results.add(new BenchmarkResult("UPDATE", systemName, datasetSize, updateTime));
     }
 
     private static void checkAndGenerateDatasets() {
@@ -135,12 +151,13 @@ public class Main {
         System.out.println("\n=========================================================================");
         System.out.println("                       SUMMARY OF AVERAGE TIMES (MS)                       ");
         System.out.println("===========================================================================");
-        System.out.printf("%-15s | %-12s | %-20s%n", "SGBD", "Taille (N)", "Average Time (ms)");
+        System.out.printf("%-10s | %-15s | %-12s | %-20s%n", "Operation", "SGBD", "Taille (N)",
+                "Average Time (ms)");
         System.out.println("---------------------------------------------------------------------------");
 
         for (BenchmarkResult res : results) {
-            System.out.printf("%-15s | %-12d | %-20.2f%n", res.getSystemName(), res.getDatasetSize(),
-                    res.getAverageTimeMs());
+            System.out.printf("%-10s | %-15s | %-12d | %-20.2f%n", res.getOperation(), res.getSystemName(),
+                    res.getDatasetSize(), res.getAverageTimeMs());
         }
         System.out.println("===========================================================================\n");
     }
@@ -150,10 +167,10 @@ public class Main {
      */
     private static void exportResultsToCsv(List<BenchmarkResult> results, String csvPath) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(csvPath))) {
-            writer.println("System,DatasetSize,AverageTimeMs");
+            writer.println("Operation,System,DatasetSize,AverageTimeMs");
             for (BenchmarkResult res : results) {
-                writer.printf(Locale.US, "%s,%d,%.2f%n", res.getSystemName(), res.getDatasetSize(),
-                        res.getAverageTimeMs());
+                writer.printf(Locale.US, "%s,%s,%d,%.2f%n", res.getOperation(), res.getSystemName(),
+                        res.getDatasetSize(), res.getAverageTimeMs());
             }
             System.out.printf("Results exported successfully to '%s'.%n", csvPath);
         } catch (IOException e) {

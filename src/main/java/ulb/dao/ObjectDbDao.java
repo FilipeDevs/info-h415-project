@@ -68,6 +68,56 @@ public class ObjectDbDao implements BenchmarkDao {
     }
 
     @Override
+    public int getPlayerWithRelations(String playername) {
+        Player player = em.find(Player.class, playername);
+        if (player == null) {
+            throw new IllegalArgumentException("Player not found: " + playername);
+        }
+
+        int relatedObjects = 0;
+        if (player.getCurrentTeam() != null) {
+            relatedObjects++;
+        }
+        if (player.getTeams() != null) {
+            for (var team : player.getTeams()) {
+                relatedObjects++;
+                if (team.getMembers() != null) {
+                    relatedObjects += team.getMembers().size();
+                }
+            }
+        }
+        if (player.getInventory() != null) {
+            relatedObjects += player.getInventory().size();
+            player.getInventory().keySet().forEach(item -> item.getName());
+        }
+        return relatedObjects;
+    }
+
+    @Override
+    public void updateInventoryAmount(String playername, String itemName, int amount) {
+        em.getTransaction().begin();
+        try {
+            Player player = em.find(Player.class, playername);
+            if (player == null || player.getInventory() == null) {
+                throw new IllegalArgumentException("Player or inventory not found: " + playername);
+            }
+
+            var matchingItem = player.getInventory().keySet().stream()
+                    .filter(item -> itemName.equals(item.getName()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Inventory item not found for player: " + playername + ", " + itemName));
+            player.getInventory().put(matchingItem, amount);
+            em.getTransaction().commit();
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            throw e;
+        }
+    }
+
+    @Override
     public void close() {
         if (em != null && em.isOpen())
             em.close();
