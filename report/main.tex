@@ -13,6 +13,15 @@
 
 \geometry{top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
 
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{blue!60!black},
+  commentstyle=\color{gray},
+  stringstyle=\color{red!60!black},
+  breaklines=true, frame=single, captionpos=b,
+  showstringspaces=false
+}
+
 \begin{document}
 \begin{titlepage}
     \begin{center}
@@ -131,6 +140,7 @@ The result is that the application has to translate between the two models every
 Object-oriented databases take a different approach. Rather than translating objects into another model, they store them as they are, which removes the middle layer entirely.
 
 \subsection{Fundamental Principles of Object-Oriented Database Management Systems}
+\label{subsec:principles}
 
 Object-oriented databases are built on a small number of ideas that together
 allow objects to be stored without being transformed. This section presents them
@@ -289,8 +299,81 @@ have smaller communities, less documentation and little external tool support.
 This is not really relevant to the technical qualities of either model, but it is a point of consideration when making a practical choice.
 
 \section{Overview of the DBMS Studied}
+
 \subsection{ObjectDB: Object DBMS for Java / JPA}
+
+ObjectDB is a commercial object database written in Java and shipped as
+a single JAR file\cite{objectdb_manual}. It stores Java objects as they are, and
+you work with it through the standard Java Persistence API (JPA), or through Java
+Data Objects (JDO) in older versions. As said in the previous chapter, using JPA
+does not mean there is a relational engine underneath, because JPA only describes
+how the application talks to the database.
+
+There are two ways to run it. In \emph{embedded} mode the database lives inside
+the application's own JVM and locks the database file for that one process. In
+\emph{client-server} mode a separate server process, a Docker container for
+example, owns the file and clients reach it over TCP/IP, so several processes can
+share the same database. For our use case we use the embedded mode because it is
+faster and it compares fairly with ObjectBox.
+
+\paragraph{Declaring persistent classes:} You mark classes with the usual JPA
+annotations. A class with \texttt{@Entity} becomes a stored object with its own
+identity, while a class with \texttt{@Embeddable} is stored inside its owner and
+does not exist on its own. Collections and maps are just Java fields, which is how
+you get the complex objects described in Section~\ref{subsec:principles}.
+
+\begin{lstlisting}[language=Java]
+@Entity
+public class Player {
+    @Id private String playername;
+    private String passwordHash;
+    @OneToMany(cascade = CascadeType.ALL) private List<Team> teams;
+}
+\end{lstlisting}
+
+\paragraph{Object identity:} Every stored object gets an identifier from ObjectDB
+itself, so you do not have to declare a primary key. If you mark a field with
+\texttt{@Id}, its value becomes the key and cannot be changed afterwards. With
+\texttt{@GeneratedValue} the database picks the key for you, by default a
+sequential 64-bit number starting at one, and it never reuses the keys of deleted
+objects\cite{objectdb_manual}. To find an object you need its class and its key.
+
+\paragraph{Storage:} A database is one file, usually ending in \texttt{.odb}, and
+it can grow to hundreds of gigabytes. Objects of the same class are written in
+primary key order, so the key you choose also decides which objects end up close
+to each other on disk\cite{objectdb_manual}. Queries are written in JPQL, the
+query language that comes with JPA, or built in code with the Criteria API.
+
+\paragraph{Indexing:} You declare indexes on fields with \texttt{@Index}, and
+they can cover one field, several fields, or enforce uniqueness. They also work
+on elements of collections, on keys and values of maps, and on fields inside
+embedded objects. Without the right index a query has to go through every object
+of the class, so indexes are what make queries on a large database usable. They
+also cost space and slow down writes, and an index added to a class that already
+holds objects does not work until everything already stored has been indexed.
+
+\paragraph{Caching:} ObjectDB caches at three levels. Each \texttt{EntityManager}
+keeps the objects it is managing, so asking for the same object twice gives you
+the same instance back. Above that sits an optional shared cache owned by the
+\texttt{EntityManagerFactory}, which helps when the application creates a lot of
+short-lived entity managers. It is turned off by default and you have to give it
+a size in the configuration file\cite{objectdb_manual}. Finally the database side
+caches file pages, compiled queries and query results, and those are configured
+per database rather than per client.
+
+\paragraph{Strengths and limitations:} Its main strength is that it follows a
+standard. Since the API is JPA, the same code can be moved to a relational
+database with Hibernate without much work, and what you learn is not tied to one
+product. On the other hand, it is a commercial product, and its free edition
+refuses to store more than one million entity objects in a single database file
+or to declare more than ten persistable classes\cite{objectdb_license}. These are
+limits enforced by the library itself, so going beyond them requires buying a
+licence whatever hardware the database runs on. It also only exists for Java, and
+its community and documentation are small in comparison to the relational systems
+it competes with.
+
 \subsection{ObjectBox: Embedded Object-Oriented and High-Performance NoSQL DBMS}
+
 \subsection{PostgreSQL: The benchmark relational DBMS (Baseline)}
 
 \section{Use Cases and Domain Modeling}
@@ -416,6 +499,12 @@ M.~Atkinson, F.~Bancilhon, D.~DeWitt, K.~Dittrich, D.~Maier, and S.~Zdonik, ``Th
 
 \bibitem{odmg}
 R.~G.~G.~Cattell and D.~K.~Barry, Eds., \emph{The Object Data Standard: ODMG 3.0}. San Francisco, CA, USA: Morgan Kaufmann, 2000. [Online]. Available: \url{https://cs.ulb.ac.be/public/_media/teaching/odmg.pdf}. [Accessed: Oct. 26, 2026].
+
+\bibitem{objectdb_manual}
+``ObjectDB 2.9 Developer's Guide,'' \emph{ObjectDB Software}. [Online]. Available: \url{https://www.objectdb.com/java/jpa}. [Accessed: Oct. 30, 2026].
+
+\bibitem{objectdb_license}
+``ObjectDB License,'' \emph{ObjectDB Software}. [Online]. Available: \url{https://www.objectdb.com/database/purchase}. [Accessed: Oct. 30, 2026].
 
 \end{thebibliography}
 
