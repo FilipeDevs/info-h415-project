@@ -217,6 +217,27 @@ described in the previous section therefore disappears.
 
 \subsection{Standards and norms}
 
+Object-oriented databases got their definition in 1989, from a paper known as the \emph{Object-Oriented Database System Manifesto}\cite{manifesto}.
+The authors listed thirteen features that a system must have to deserve the name.
+Eight of them come from object orientation itself, namely complex objects, object
+identity, encapsulation, types and classes, inheritance, overriding, extensibility
+and computational completeness. 
+The other five are what any database is expected to do, like storing data persistently, managing secondary storage, handling
+concurrent access, recovering after a failure and answering ad hoc queries.
+
+A group of vendors then tried to agree on a common standard. 
+They formed the Object Data Management Group in 1991 and published a specification with an object model, 
+a definition language (ODL), a query language close to SQL (OQL) and bindings for C++, Smalltalk and Java. 
+The last version, ODMG 3.0, came out in 2000\cite{odmg}. A year later the group gave its Java binding to the Java
+Community Process, where it became JDO, and then shut down. JDO was eventually succeeded by the Java Persistence API (JPA).
+
+JPA was built for mapping objects onto relational tables, and it is normally used with a framework like Hibernate. 
+But it only describes how the application talks to the database, not how the data is stored, so a real object database can
+implement it too. 
+ObjectDB does exactly that, which means that seeing JPA in the code does not imply there is a relational database underneath. 
+What matters most is that today no single standard is followed by everyone. ObjectDB uses JPA, while ObjectBox has its own API 
+and follows no standard at all.
+
 \subsection{Relational Model (RDBMS) vs. Object-Oriented Model (OODBMS)}
 
 The two models can be compared on a small number of axes. \textbf{Table \ref{tab:comparison}} summarises them, and the paragraphs below discuss the ones that matter most for
@@ -247,28 +268,25 @@ Ecosystem & very large & small\\
 \label{tab:comparison}
 \end{table}
 
-\paragraph{Cost of following a relationship:} The cost of a join grows with the
+\paragraph{Cost of following a relationship:} The cost of a join increases with the
 number of rows involved, and an operation crossing several tables multiplies that
-cost. Following a reference reaches a known object instead, whatever the size of
-the database. The deeper the structure being traversed, the larger the difference
-should be.
+cost. But with object-oriented databases, you only need to follow a reference to reach a known object, whatever the size of
+the database. So the deeper the structure being traversed, the larger the difference should be.
 
 \paragraph{Expressing a query:} The relational model only offers declarative
-queries, but in a language that is standardised and supported by many tools.
-Object-oriented systems also offer navigation, which helps when the starting
-point is known, but their query languages differ from one product to another, so
+queries but in a language that is standardised and supported by many tools.
+Object-oriented systems also offer navigation, but their query languages differ from one product to another, so
 code written for one cannot be reused with another.
 
 \paragraph{Schema and evolution:} A relational schema is declared explicitly and
 modified with well-established tools. In an object-oriented database it is
-derived from the classes themselves, which removes a source of duplication, but
+derived from the classes themselves, which then removes a source of duplication, but
 changing those classes once data exists is handled differently by each product.
 
-\paragraph{Maturity of the ecosystem:} Relational systems are surrounded by
-decades of tooling and widespread skills. Object-oriented systems are few, with
-smaller communities, less documentation and little external tool support. This
-has little to do with the technical qualities of either model, but it weighs
-heavily on the choice made in practice, and the conclusion returns to it.
+\paragraph{Maturity of the ecosystem:} Relational systems are backed by
+decades of tooling and research. Object-oriented systems are less mature since they have been around for a shorter time, 
+have smaller communities, less documentation and little external tool support. 
+This is not really relevant to the technical qualities of either model, but it is a point of consideration when making a practical choice.
 
 \section{Overview of the DBMS Studied}
 \subsection{ObjectDB: Object DBMS for Java / JPA}
@@ -392,6 +410,12 @@ M.~Lomuscio, ``Pokemon Dataset,'' \emph{Kaggle}, 2017. [Online]. Available: \url
 
 \bibitem{kaggle_item}
 M.~O'Neill, ``Pokemon Sun and Moon (Gen 7) Stats,'' \emph{Kaggle}, 2016. [Online]. Available: \url{https://www.kaggle.com/datasets/mylesoneill/pokemon-sun-and-moon-gen-7-stats}. [Accessed: Oct. 17, 2026].
+
+\bibitem{manifesto}
+M.~Atkinson, F.~Bancilhon, D.~DeWitt, K.~Dittrich, D.~Maier, and S.~Zdonik, ``The Object-Oriented Database System Manifesto,'' in \emph{Proc. 1st Int. Conf. on Deductive and Object-Oriented Databases (DOOD)}, Kyoto, Japan, 1989, pp.~223--240. [Online]. Available: \url{https://cs.brown.edu/courses/cs295-11/2006/oo-manifesto.pdf}. [Accessed: Oct. 26, 2026].
+
+\bibitem{odmg}
+R.~G.~G.~Cattell and D.~K.~Barry, Eds., \emph{The Object Data Standard: ODMG 3.0}. San Francisco, CA, USA: Morgan Kaufmann, 2000. [Online]. Available: \url{https://cs.ulb.ac.be/public/_media/teaching/odmg.pdf}. [Accessed: Oct. 26, 2026].
 
 \end{thebibliography}
 
