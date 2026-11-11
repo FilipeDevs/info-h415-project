@@ -9,6 +9,7 @@
 \usepackage{algorithmic}
 \usepackage{listings}
 \usepackage{tikz}
+\usepackage{booktabs}
 \usetikzlibrary{positioning, arrows.meta, fit, backgrounds}
 
 \geometry{top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
@@ -471,12 +472,54 @@ For each generated player profile:
 \subsection{Evaluated operations}
 
 \section{Results and Comparative Analysis}
+
 \subsection{Summary of results}
+The raw timing results collected across all benchmarking suites are summarized in Table~\ref{tab:benchmark_results}. Metrics report average execution time in milliseconds over the five measured iterations ($N = 1\text{K}, 10\text{K}, 100\text{K}, 1\text{M}$).
+
+\begin{table}[htbp]
+	\centering
+	\small
+	\begin{tabular}{lrrrr}
+		\toprule
+		\textbf{DBMS / Operation} & \textbf{1,000 Players} & \textbf{10,000 Players} & \textbf{100,000 Players} & \textbf{1,000,000 Players} \\
+		\midrule
+		\multicolumn{5}{l}{\textbf{Insertion Average Time (ms)}} \\
+		\quad PostgreSQL & 543.37 & 5439.26 & 61398.77 & 671165.43 \\
+		\quad ObjectDB   & 48.84 & 387.65 & 4347.32 & N/A* \\
+		\quad ObjectBox  & 91.84 & 1108.79 & 9670.42 & N/A* \\
+		\midrule
+		\multicolumn{5}{l}{\textbf{GET Average Time (ms)}} \\
+		\quad PostgreSQL & 1.38 & 1.42 & 1.57 & 1.58 \\
+		\quad ObjectDB   & 0.54 & 0.54 & 0.66 & N/A* \\
+		\quad ObjectBox  & 0.14 & 0.14 & 0.21 & N/A* \\
+		\midrule
+		\multicolumn{5}{l}{\textbf{UPDATE Average Time (ms)}} \\
+		\quad PostgreSQL & 1.95 & 1.77 & 1.93 & 1.80 \\
+		\quad ObjectDB   & 0.29 & 0.28 & 0.33 & N/A* \\
+		\quad ObjectBox  & 0.36 & 0.33 & 0.44 & N/A* \\
+		\bottomrule
+	\end{tabular}
+	\caption{Benchmark execution results (Average elapsed time in ms over Runs 2--6)}
+	\label{tab:benchmark_results}
+\end{table}
+
+* The free evaluation offer for ObjectDB imposes a strict limit of one million entities. ObjectBox, meanwhile, hits native memory limits when persisting a graph containing fewer than one million entities.
+
 \subsection{Scalability analysis}
+
+\subsubsection{Insertion rate and scaling of complex objects}
+Insertion latency highlights the fundamental architectural divergence between relational decomposition and object graph persistence:
+
+\subsubsection{Entity updates and transactional persistence}
+
 \subsection{Critical analysis by DBMS}
+
 \subsubsection{PostgreSQL}
+
 \subsubsection{ObjectDB}
+
 \subsubsection{ObjectBox}
+
 
 \section{Overall Assessment: Pros and Cons}
 \subsection{Comparison table}
