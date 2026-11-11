@@ -26,7 +26,7 @@ import ulb.object_db_model.Player;
 public class Main {
 
     // Connection configuration for the Database systems
-    private static final String PG_URL = "jdbc:postgresql://martingouv.duckdns.org:5432/pokemon_db?reRewriteBatchedInserts=true";
+    private static final String PG_URL = "jdbc:postgresql://localhost:5432/pokemon_db?reRewriteBatchedInserts=true";
     private static final String PG_USER = "postgres";
     private static final String PG_PASSWORD = "postgres_password";
     private static final String OBJECTDB_PATH = "db/objectdb_benchmark.odb";
