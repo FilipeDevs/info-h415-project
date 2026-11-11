@@ -5,9 +5,11 @@ import java.io.FileReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
+import ulb.exception.DaoException;
 import ulb.object_db_model.Item;
 import ulb.object_db_model.Player;
 import ulb.object_db_model.Pokemon;
@@ -26,9 +28,13 @@ public class PostgresDao implements BenchmarkDao {
     }
 
     @Override
-    public void init() throws Exception {
-        this.connection = DriverManager.getConnection(url, user, password);
-        this.connection.setAutoCommit(false);
+    public void init() throws DaoException {
+        try {
+            this.connection = DriverManager.getConnection(url, user, password);
+            this.connection.setAutoCommit(false);
+        } catch (SQLException e) {
+            throw new DaoException("Error while init PostgreSQL", e);
+        }
 
         // Seed reference catalog (Pokemons & Items) from CSVs
         seedGameDataFromCsv();
@@ -97,18 +103,22 @@ public class PostgresDao implements BenchmarkDao {
     }
 
     @Override
-    public void clearDatabase() throws Exception {
+    public void clearDatabase() throws DaoException {
         try (var stmt = connection.createStatement()) {
             stmt.executeUpdate("TRUNCATE TABLE item_player, team_members, teams, players CASCADE;");
             connection.commit();
-        } catch (Exception e) {
-            connection.rollback();
-            throw e;
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException rollbackEx) {
+                e.addSuppressed(rollbackEx);
+            }
+            throw new DaoException("Error while cleaning up PostgreSQL", e);
         }
     }
 
     @Override
-    public void insertPlayers(List<Player> players) throws Exception {
+    public void insertPlayers(List<Player> players) throws DaoException {
         String sqlPlayer = "INSERT INTO players (playername, password_hash, current_team) VALUES (?, ?, NULL) ON CONFLICT DO NOTHING";
         String sqlTeam = "INSERT INTO teams (playername, name) VALUES (?, ?) ON CONFLICT DO NOTHING";
         String sqlTeamMember = "INSERT INTO team_members (playername, team_name, pokemon_id, slot_position) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING";
@@ -170,36 +180,58 @@ public class PostgresDao implements BenchmarkDao {
             connection.commit();
 
         } catch (Exception e) {
-            connection.rollback();
-            throw e;
+            try {
+                connection.rollback();
+            } catch (SQLException rollbackEx) {
+                e.addSuppressed(rollbackEx);
+            }
+            throw new DaoException("Error while inserting player with PostgreSQL", e);
         }
     }
 
     @Override
-    public int getPlayerWithRelations(String playername) throws Exception {
-        String sql = """
-                SELECT p.playername, t.name, tm.pokemon_id, ip.item_id, ip.amount
-                FROM players p
-                LEFT JOIN teams t ON t.playername = p.playername
-                LEFT JOIN team_members tm ON tm.playername = t.playername AND tm.team_name = t.name
-                LEFT JOIN item_player ip ON ip.playername = p.playername
-                WHERE p.playername = ?
+    public int getPlayerWithRelations(String playername) throws DaoException {
+        int rows = 0;
+
+        String sqlTeams = """
+                    SELECT t.name, tm.pokemon_id
+                    FROM teams t
+                    LEFT JOIN team_members tm ON tm.playername = t.playername AND tm.team_name = t.name
+                    WHERE t.playername = ?
                 """;
 
-        int rows = 0;
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, playername);
-            try (var resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    resultSet.getString(1);
-                    resultSet.getString(2);
-                    resultSet.getObject(3);
-                    resultSet.getObject(4);
-                    resultSet.getObject(5);
+        try (PreparedStatement psTeams = connection.prepareStatement(sqlTeams)) {
+            psTeams.setString(1, playername);
+            try (var rs = psTeams.executeQuery()) {
+                while (rs.next()) {
+                    rs.getString(1);
+                    rs.getObject(2);
                     rows++;
                 }
             }
+        } catch (SQLException e) {
+            throw new DaoException("psTeams Error", e);
         }
+
+        String sqlInventory = """
+                    SELECT item_id, amount
+                    FROM item_player
+                    WHERE playername = ?
+                """;
+
+        try (PreparedStatement psInv = connection.prepareStatement(sqlInventory)) {
+            psInv.setString(1, playername);
+            try (var rs = psInv.executeQuery()) {
+                while (rs.next()) {
+                    rs.getObject(1);
+                    rs.getInt(2);
+                    rows++;
+                }
+            }
+        } catch (SQLException e) {
+            throw new DaoException("psInv Error", e);
+        }
+
         if (rows == 0) {
             throw new IllegalArgumentException("Player not found: " + playername);
         }
@@ -207,7 +239,7 @@ public class PostgresDao implements BenchmarkDao {
     }
 
     @Override
-    public void updateInventoryAmount(String playername, String itemName, int amount) throws Exception {
+    public void updateInventoryAmount(String playername, String itemName, int amount) throws DaoException {
         String sql = """
                 UPDATE item_player ip
                 SET amount = ?
@@ -225,8 +257,12 @@ public class PostgresDao implements BenchmarkDao {
             }
             connection.commit();
         } catch (Exception e) {
-            connection.rollback();
-            throw e;
+            try {
+                connection.rollback();
+            } catch (SQLException rollbackEx) {
+                e.addSuppressed(rollbackEx);
+            }
+            throw new DaoException("Error while updating inventory amount with PostgreSQL", e);
         }
     }
 

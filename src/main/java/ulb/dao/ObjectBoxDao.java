@@ -5,6 +5,7 @@ import io.objectbox.BoxStore;
 import io.objectbox.BoxStoreBuilder;
 import io.objectbox.query.Query;
 import io.objectbox.query.QueryBuilder.StringOrder;
+import ulb.exception.DaoException;
 import ulb.object_box_model.InventoryEntry;
 import ulb.object_box_model.Item;
 import ulb.object_box_model.MyObjectBox;
@@ -14,6 +15,7 @@ import ulb.object_box_model.Pokemon;
 import ulb.object_box_model.Team;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -32,7 +34,7 @@ public class ObjectBoxDao implements BenchmarkDao {
     }
 
     @Override
-    public void init() throws Exception {
+    public void init() throws DaoException {
         File dir = new File(dbDirectory);
         if (!dir.exists()) {
             dir.mkdirs();
@@ -41,6 +43,8 @@ public class ObjectBoxDao implements BenchmarkDao {
             paths.filter(path -> !path.equals(dir.toPath()))
                     .sorted(Comparator.reverseOrder())
                     .forEach(this::deletePath);
+        } catch (IOException e) {
+            throw new DaoException("Error in init with ObjectBox", e);
         }
 
         BoxStoreBuilder builder = MyObjectBox.builder().directory(dir).maxSizeInKByte(30L * 1024 * 1024);
@@ -58,7 +62,7 @@ public class ObjectBoxDao implements BenchmarkDao {
     }
 
     @Override
-    public void clearDatabase() throws Exception {
+    public void clearDatabase() throws DaoException {
         if (store != null) {
             store.runInTx(() -> {
                 store.boxFor(Player.class).removeAll();
@@ -71,7 +75,7 @@ public class ObjectBoxDao implements BenchmarkDao {
     }
 
     @Override
-    public void insertPlayers(List<ulb.object_db_model.Player> players) throws Exception {
+    public void insertPlayers(List<ulb.object_db_model.Player> players) throws DaoException {
         List<Player> obxPlayers = new ArrayList<>(players.size());
 
         for (ulb.object_db_model.Player player : players) {
@@ -126,6 +130,8 @@ public class ObjectBoxDao implements BenchmarkDao {
 
     @Override
     public int getPlayerWithRelations(String playername) {
+        store.closeThreadResources();
+
         Query<Player> query = playerBox.query().equal(Player_.playername, playername, StringOrder.CASE_SENSITIVE)
                 .build();
         try {
@@ -156,6 +162,8 @@ public class ObjectBoxDao implements BenchmarkDao {
 
     @Override
     public void updateInventoryAmount(String playername, String itemName, int amount) {
+        store.closeThreadResources();
+
         Query<Player> query = playerBox.query().equal(Player_.playername, playername, StringOrder.CASE_SENSITIVE)
                 .build();
         try {

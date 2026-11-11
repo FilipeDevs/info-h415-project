@@ -4,6 +4,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
+import ulb.object_db_model.Item;
 import ulb.object_db_model.Player;
 
 import java.io.File;
@@ -69,6 +70,8 @@ public class ObjectDbDao implements BenchmarkDao {
 
     @Override
     public int getPlayerWithRelations(String playername) {
+        em.clear();
+
         Player player = em.find(Player.class, playername);
         if (player == null) {
             throw new IllegalArgumentException("Player not found: " + playername);
@@ -88,13 +91,14 @@ public class ObjectDbDao implements BenchmarkDao {
         }
         if (player.getInventory() != null) {
             relatedObjects += player.getInventory().size();
-            player.getInventory().keySet().forEach(item -> item.getName());
+            player.getInventory().keySet().forEach(Item::getName);
         }
         return relatedObjects;
     }
 
     @Override
     public void updateInventoryAmount(String playername, String itemName, int amount) {
+        em.clear();
         em.getTransaction().begin();
         try {
             Player player = em.find(Player.class, playername);

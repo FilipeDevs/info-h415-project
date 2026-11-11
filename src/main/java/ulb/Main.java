@@ -32,6 +32,13 @@ public class Main {
     private static final String OBJECTDB_PATH = "db/objectdb_benchmark.odb";
     private static final String OBJECTBOX_DIR = "db/objectbox_benchmark";
 
+    // Systems name
+    private static final String POSTGRESQL_NAME = "PostgreSQL";
+    private static final String OBJECT_DB_NAME = "ObjectDB";
+    private static final String OBJECT_BOX_NAME = "ObjectBox";
+
+    private static final String INSERT = "INSERT";
+
     private static final int[] DATASET_SIZES = { 1_000, 10_000, 100_000, 1_000_000 };
 
     private static final Gson GSON = new GsonBuilder()
@@ -63,10 +70,10 @@ public class Main {
             // Benchmark PostgreSQL
             try (PostgresDao pgDao = new PostgresDao(PG_URL, PG_USER, PG_PASSWORD)) {
                 pgDao.init();
-                double avgTime = benchmarkRunner.runInsertionBenchmark(pgDao, () -> loadDataset(jsonPath), "PostgreSQL",
+                double avgTime = benchmarkRunner.runInsertionBenchmark(pgDao, () -> loadDataset(jsonPath), POSTGRESQL_NAME,
                         size);
-                results.add(new BenchmarkResult("INSERT", "PostgreSQL", size, avgTime));
-                runReadAndUpdateBenchmarks(benchmarkRunner, pgDao, dataset, "PostgreSQL", size, results);
+                results.add(new BenchmarkResult(INSERT, POSTGRESQL_NAME, size, avgTime));
+                runReadAndUpdateBenchmarks(benchmarkRunner, pgDao, dataset, POSTGRESQL_NAME, size, results);
             } catch (Exception e) {
                 System.err.println("Error during PostgreSQL benchmark : " + e.getMessage());
             }
@@ -74,10 +81,10 @@ public class Main {
             // Benchmark ObjectDB
             try (ObjectDbDao odbDao = new ObjectDbDao(OBJECTDB_PATH)) {
                 odbDao.init();
-                double avgTime = benchmarkRunner.runInsertionBenchmark(odbDao, () -> loadDataset(jsonPath), "ObjectDB",
+                double avgTime = benchmarkRunner.runInsertionBenchmark(odbDao, () -> loadDataset(jsonPath), OBJECT_DB_NAME,
                         size);
-                results.add(new BenchmarkResult("INSERT", "ObjectDB", size, avgTime));
-                runReadAndUpdateBenchmarks(benchmarkRunner, odbDao, dataset, "ObjectDB", size, results);
+                results.add(new BenchmarkResult(INSERT, OBJECT_DB_NAME, size, avgTime));
+                runReadAndUpdateBenchmarks(benchmarkRunner, odbDao, dataset, OBJECT_DB_NAME, size, results);
             } catch (Exception e) {
                 System.err.println("Error during ObjectDB benchmark : " + e.getMessage());
             }
@@ -85,10 +92,10 @@ public class Main {
             // Benchmark ObjectBox
             try (ObjectBoxDao obxDao = new ObjectBoxDao(OBJECTBOX_DIR)) {
                 obxDao.init();
-                double avgTime = benchmarkRunner.runInsertionBenchmark(obxDao, () -> loadDataset(jsonPath), "ObjectBox",
+                double avgTime = benchmarkRunner.runInsertionBenchmark(obxDao, () -> loadDataset(jsonPath), OBJECT_BOX_NAME,
                         size);
-                results.add(new BenchmarkResult("INSERT", "ObjectBox", size, avgTime));
-                runReadAndUpdateBenchmarks(benchmarkRunner, obxDao, dataset, "ObjectBox", size, results);
+                results.add(new BenchmarkResult(INSERT, OBJECT_BOX_NAME, size, avgTime));
+                runReadAndUpdateBenchmarks(benchmarkRunner, obxDao, dataset, OBJECT_BOX_NAME, size, results);
             } catch (Exception e) {
                 System.err.println("Error during ObjectBox benchmark : " + e.getMessage());
             }
@@ -100,14 +107,11 @@ public class Main {
 
     private static void runReadAndUpdateBenchmarks(BenchmarkRunner benchmarkRunner, ulb.dao.BenchmarkDao dao,
             List<Player> dataset, String systemName, int datasetSize, List<BenchmarkResult> results) {
-        Player targetPlayer = dataset.get(0);
-        String itemName = targetPlayer.getInventory().keySet().iterator().next().getName();
 
-        double getTime = benchmarkRunner.runGetBenchmark(dao, targetPlayer.getPlayername(), systemName, datasetSize);
+        double getTime = benchmarkRunner.runGetBenchmark(dao, dataset, systemName, datasetSize);
         results.add(new BenchmarkResult("GET", systemName, datasetSize, getTime));
 
-        double updateTime = benchmarkRunner.runUpdateBenchmark(dao, targetPlayer.getPlayername(), itemName, systemName,
-                datasetSize);
+        double updateTime = benchmarkRunner.runUpdateBenchmark(dao, dataset, systemName, datasetSize);
         results.add(new BenchmarkResult("UPDATE", systemName, datasetSize, updateTime));
     }
 

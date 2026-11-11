@@ -52,7 +52,6 @@ public class DatasetGenerator {
             }
         } catch (IOException e) {
             System.err.println("Error while generating datasets: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
