@@ -3,41 +3,38 @@
 =================================================
 
 
->>> Loading the dataset into memory (1000 player)...
-Dataset of 1000 players successfully loaded.
-
 ==========================================
 Start of the insertion benchmark for [PostgreSQL] with 1000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 549,14 ms
-Run 2 : 517,99 ms
-Run 3 : 518,92 ms
-Run 4 : 537,58 ms
-Run 5 : 565,48 ms
-Run 6 : 576,88 ms
---> Average insertion time for PostgreSQL (1000 items) : 543,37 ms
+Run 1 (WARM-UP - Ignored) : 525,76 ms
+Run 2 : 498,74 ms
+Run 3 : 491,34 ms
+Run 4 : 517,97 ms
+Run 5 : 512,96 ms
+Run 6 : 505,14 ms
+--> Average insertion time for PostgreSQL (1000 items) : 505,23 ms
 
 ==========================================
 Start of the GET benchmark for [PostgreSQL] with 1000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 5,39 ms
-Run 2 : 1,37 ms
-Run 3 : 1,27 ms
-Run 4 : 1,29 ms
-Run 5 : 1,44 ms
-Run 6 : 1,50 ms
---> Average GET time for PostgreSQL (1000 items) : 1,38 ms
+Run 1 (WARM-UP - Ignored) : 6,18 ms
+Run 2 : 1,60 ms
+Run 3 : 1,59 ms
+Run 4 : 1,45 ms
+Run 5 : 1,36 ms
+Run 6 : 1,31 ms
+--> Average GET time for PostgreSQL (1000 items) : 1,46 ms
 
 ==========================================
 Start of the UPDATE benchmark for [PostgreSQL] with 1000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 2,19 ms
-Run 2 : 2,05 ms
-Run 3 : 2,01 ms
-Run 4 : 1,88 ms
-Run 5 : 1,86 ms
-Run 6 : 1,96 ms
---> Average UPDATE time for PostgreSQL (1000 items) : 1,95 ms
+Run 1 (WARM-UP - Ignored) : 2,86 ms
+Run 2 : 1,75 ms
+Run 3 : 1,76 ms
+Run 4 : 1,72 ms
+Run 5 : 1,83 ms
+Run 6 : 1,65 ms
+--> Average UPDATE time for PostgreSQL (1000 items) : 1,74 ms
 WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
 WARNING: sun.misc.Unsafe::allocateMemory has been called by com.objectdb.o.OSH (file:/C:/Users/ethan/.m2/repository/com/objectdb/objectdb/2.8.9/objectdb-2.8.9.jar)
 WARNING: Please consider reporting this to the maintainers of class com.objectdb.o.OSH
@@ -46,338 +43,349 @@ WARNING: sun.misc.Unsafe::allocateMemory will be removed in a future release
 ==========================================
 Start of the insertion benchmark for [ObjectDB] with 1000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 109,94 ms
-Run 2 : 58,59 ms
-Run 3 : 46,58 ms
-Run 4 : 45,53 ms
-Run 5 : 44,85 ms
-Run 6 : 48,65 ms
---> Average insertion time for ObjectDB (1000 items) : 48,84 ms
+Run 1 (WARM-UP - Ignored) : 111,93 ms
+Run 2 : 54,24 ms
+Run 3 : 44,43 ms
+Run 4 : 43,54 ms
+Run 5 : 52,34 ms
+Run 6 : 40,35 ms
+--> Average insertion time for ObjectDB (1000 items) : 46,98 ms
 
 ==========================================
 Start of the GET benchmark for [ObjectDB] with 1000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 2,58 ms
-Run 2 : 0,71 ms
-Run 3 : 0,63 ms
-Run 4 : 0,82 ms
-Run 5 : 0,34 ms
-Run 6 : 0,23 ms
---> Average GET time for ObjectDB (1000 items) : 0,54 ms
+Run 1 (WARM-UP - Ignored) : 3,93 ms
+Run 2 : 0,70 ms
+Run 3 : 0,79 ms
+Run 4 : 0,83 ms
+Run 5 : 0,41 ms
+Run 6 : 0,27 ms
+--> Average GET time for ObjectDB (1000 items) : 0,60 ms
 
 ==========================================
 Start of the UPDATE benchmark for [ObjectDB] with 1000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 0,82 ms
-Run 2 : 0,27 ms
-Run 3 : 0,29 ms
-Run 4 : 0,37 ms
-Run 5 : 0,28 ms
-Run 6 : 0,24 ms
---> Average UPDATE time for ObjectDB (1000 items) : 0,29 ms
+Run 1 (WARM-UP - Ignored) : 1,87 ms
+Run 2 : 0,36 ms
+Run 3 : 0,28 ms
+Run 4 : 0,29 ms
+Run 5 : 0,48 ms
+Run 6 : 0,25 ms
+--> Average UPDATE time for ObjectDB (1000 items) : 0,33 ms
 
 ==========================================
 Start of the insertion benchmark for [ObjectBox] with 1000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 283,34 ms
-Run 2 : 223,58 ms
-Run 3 : 59,84 ms
-Run 4 : 59,56 ms
-Run 5 : 59,27 ms
-Run 6 : 56,96 ms
---> Average insertion time for ObjectBox (1000 items) : 91,84 ms
+Run 1 (WARM-UP - Ignored) : 272,38 ms
+Run 2 : 225,52 ms
+Run 3 : 64,40 ms
+Run 4 : 66,43 ms
+Run 5 : 60,04 ms
+Run 6 : 59,29 ms
+--> Average insertion time for ObjectBox (1000 items) : 95,14 ms
 
 ==========================================
 Start of the GET benchmark for [ObjectBox] with 1000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 2,81 ms
-Run 2 : 0,18 ms
-Run 3 : 0,14 ms
-Run 4 : 0,15 ms
-Run 5 : 0,13 ms
-Run 6 : 0,11 ms
---> Average GET time for ObjectBox (1000 items) : 0,14 ms
+Run 1 (WARM-UP - Ignored) : 3,77 ms
+Run 2 : 0,17 ms
+Run 3 : 0,32 ms
+Run 4 : 0,20 ms
+Run 5 : 0,17 ms
+Run 6 : 0,17 ms
+--> Average GET time for ObjectBox (1000 items) : 0,21 ms
 
 ==========================================
 Start of the UPDATE benchmark for [ObjectBox] with 1000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 1,10 ms
-Run 2 : 0,38 ms
-Run 3 : 0,36 ms
-Run 4 : 0,33 ms
-Run 5 : 0,38 ms
-Run 6 : 0,34 ms
---> Average UPDATE time for ObjectBox (1000 items) : 0,36 ms
-
->>> Loading the dataset into memory (10000 player)...
-Dataset of 10000 players successfully loaded.
+Run 1 (WARM-UP - Ignored) : 1,35 ms
+Run 2 : 0,29 ms
+Run 3 : 0,29 ms
+Run 4 : 0,27 ms
+Run 5 : 0,25 ms
+Run 6 : 0,23 ms
+--> Average UPDATE time for ObjectBox (1000 items) : 0,27 ms
 
 ==========================================
 Start of the insertion benchmark for [PostgreSQL] with 10000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 5522,26 ms
-Run 2 : 5437,53 ms
-Run 3 : 5391,18 ms
-Run 4 : 5467,78 ms
-Run 5 : 5374,17 ms
-Run 6 : 5525,64 ms
---> Average insertion time for PostgreSQL (10000 items) : 5439,26 ms
+Run 1 (WARM-UP - Ignored) : 5556,73 ms
+Run 2 : 5955,80 ms
+Run 3 : 5527,35 ms
+Run 4 : 6078,77 ms
+Run 5 : 5856,32 ms
+Run 6 : 5748,81 ms
+--> Average insertion time for PostgreSQL (10000 items) : 5833,41 ms
 
 ==========================================
 Start of the GET benchmark for [PostgreSQL] with 10000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 1,96 ms
-Run 2 : 1,40 ms
-Run 3 : 1,40 ms
-Run 4 : 1,55 ms
-Run 5 : 1,35 ms
-Run 6 : 1,40 ms
---> Average GET time for PostgreSQL (10000 items) : 1,42 ms
+Run 1 (WARM-UP - Ignored) : 2,81 ms
+Run 2 : 1,68 ms
+Run 3 : 1,55 ms
+Run 4 : 1,53 ms
+Run 5 : 1,45 ms
+Run 6 : 1,37 ms
+--> Average GET time for PostgreSQL (10000 items) : 1,52 ms
 
 ==========================================
 Start of the UPDATE benchmark for [PostgreSQL] with 10000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 1,89 ms
-Run 2 : 1,91 ms
-Run 3 : 1,78 ms
-Run 4 : 1,71 ms
-Run 5 : 1,74 ms
-Run 6 : 1,72 ms
---> Average UPDATE time for PostgreSQL (10000 items) : 1,77 ms
+Run 1 (WARM-UP - Ignored) : 3,18 ms
+Run 2 : 2,25 ms
+Run 3 : 2,05 ms
+Run 4 : 2,15 ms
+Run 5 : 2,21 ms
+Run 6 : 1,90 ms
+--> Average UPDATE time for PostgreSQL (10000 items) : 2,11 ms
 
 ==========================================
 Start of the insertion benchmark for [ObjectDB] with 10000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 401,56 ms
-Run 2 : 393,71 ms
-Run 3 : 390,73 ms
-Run 4 : 373,75 ms
-Run 5 : 381,91 ms
-Run 6 : 398,13 ms
---> Average insertion time for ObjectDB (10000 items) : 387,65 ms
+Run 1 (WARM-UP - Ignored) : 605,60 ms
+Run 2 : 515,48 ms
+Run 3 : 496,59 ms
+Run 4 : 526,16 ms
+Run 5 : 515,30 ms
+Run 6 : 360,22 ms
+--> Average insertion time for ObjectDB (10000 items) : 482,75 ms
 
 ==========================================
 Start of the GET benchmark for [ObjectDB] with 10000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 0,85 ms
-Run 2 : 0,60 ms
-Run 3 : 0,96 ms
-Run 4 : 0,67 ms
-Run 5 : 0,23 ms
-Run 6 : 0,25 ms
---> Average GET time for ObjectDB (10000 items) : 0,54 ms
+Run 1 (WARM-UP - Ignored) : 1,51 ms
+Run 2 : 0,55 ms
+Run 3 : 0,28 ms
+Run 4 : 0,23 ms
+Run 5 : 0,18 ms
+Run 6 : 0,19 ms
+--> Average GET time for ObjectDB (10000 items) : 0,29 ms
 
 ==========================================
 Start of the UPDATE benchmark for [ObjectDB] with 10000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 0,50 ms
-Run 2 : 0,42 ms
-Run 3 : 0,39 ms
-Run 4 : 0,24 ms
+Run 1 (WARM-UP - Ignored) : 1,08 ms
+Run 2 : 0,28 ms
+Run 3 : 0,28 ms
+Run 4 : 0,19 ms
 Run 5 : 0,19 ms
-Run 6 : 0,17 ms
---> Average UPDATE time for ObjectDB (10000 items) : 0,28 ms
+Run 6 : 0,21 ms
+--> Average UPDATE time for ObjectDB (10000 items) : 0,23 ms
 
 ==========================================
 Start of the insertion benchmark for [ObjectBox] with 10000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 2318,58 ms
-Run 2 : 2679,60 ms
-Run 3 : 949,24 ms
-Run 4 : 656,58 ms
-Run 5 : 654,16 ms
-Run 6 : 604,39 ms
---> Average insertion time for ObjectBox (10000 items) : 1108,79 ms
+Run 1 (WARM-UP - Ignored) : 2574,14 ms
+Run 2 : 2869,86 ms
+Run 3 : 985,72 ms
+Run 4 : 639,87 ms
+Run 5 : 635,62 ms
+Run 6 : 624,68 ms
+--> Average insertion time for ObjectBox (10000 items) : 1151,15 ms
 
 ==========================================
 Start of the GET benchmark for [ObjectBox] with 10000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 0,31 ms
-Run 2 : 0,13 ms
-Run 3 : 0,15 ms
-Run 4 : 0,17 ms
-Run 5 : 0,11 ms
-Run 6 : 0,12 ms
---> Average GET time for ObjectBox (10000 items) : 0,14 ms
+Run 1 (WARM-UP - Ignored) : 0,37 ms
+Run 2 : 0,15 ms
+Run 3 : 0,11 ms
+Run 4 : 0,13 ms
+Run 5 : 0,08 ms
+Run 6 : 0,11 ms
+--> Average GET time for ObjectBox (10000 items) : 0,12 ms
 
 ==========================================
 Start of the UPDATE benchmark for [ObjectBox] with 10000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 0,65 ms
-Run 2 : 0,34 ms
-Run 3 : 0,30 ms
-Run 4 : 0,31 ms
-Run 5 : 0,35 ms
-Run 6 : 0,36 ms
---> Average UPDATE time for ObjectBox (10000 items) : 0,33 ms
-
->>> Loading the dataset into memory (100000 player)...
-Dataset of 100000 players successfully loaded.
+Run 1 (WARM-UP - Ignored) : 0,86 ms
+Run 2 : 0,32 ms
+Run 3 : 0,29 ms
+Run 4 : 0,32 ms
+Run 5 : 0,26 ms
+Run 6 : 0,28 ms
+--> Average UPDATE time for ObjectBox (10000 items) : 0,29 ms
 
 ==========================================
 Start of the insertion benchmark for [PostgreSQL] with 100000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 65628,44 ms
-Run 2 : 61221,00 ms
-Run 3 : 60841,67 ms
-Run 4 : 61297,75 ms
-Run 5 : 61506,63 ms
-Run 6 : 62126,81 ms
---> Average insertion time for PostgreSQL (100000 items) : 61398,77 ms
+Run 1 (WARM-UP - Ignored) : 60757,39 ms
+Run 2 : 60425,46 ms
+Run 3 : 61074,19 ms
+Run 4 : 61719,31 ms
+Run 5 : 60794,87 ms
+Run 6 : 61486,65 ms
+--> Average insertion time for PostgreSQL (100000 items) : 61100,10 ms
 
 ==========================================
 Start of the GET benchmark for [PostgreSQL] with 100000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 1,98 ms
-Run 2 : 1,77 ms
-Run 3 : 1,52 ms
-Run 4 : 1,52 ms
-Run 5 : 1,54 ms
-Run 6 : 1,49 ms
---> Average GET time for PostgreSQL (100000 items) : 1,57 ms
+Run 1 (WARM-UP - Ignored) : 2,61 ms
+Run 2 : 1,78 ms
+Run 3 : 1,97 ms
+Run 4 : 1,81 ms
+Run 5 : 1,72 ms
+Run 6 : 1,37 ms
+--> Average GET time for PostgreSQL (100000 items) : 1,73 ms
 
 ==========================================
 Start of the UPDATE benchmark for [PostgreSQL] with 100000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 2,31 ms
-Run 2 : 1,93 ms
-Run 3 : 1,87 ms
-Run 4 : 2,05 ms
-Run 5 : 2,00 ms
+Run 1 (WARM-UP - Ignored) : 2,77 ms
+Run 2 : 1,83 ms
+Run 3 : 1,91 ms
+Run 4 : 1,84 ms
+Run 5 : 1,71 ms
 Run 6 : 1,78 ms
---> Average UPDATE time for PostgreSQL (100000 items) : 1,93 ms
+--> Average UPDATE time for PostgreSQL (100000 items) : 1,81 ms
 
 ==========================================
 Start of the insertion benchmark for [ObjectDB] with 100000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 4340,95 ms
-Run 2 : 4155,37 ms
-Run 3 : 4542,07 ms
-Run 4 : 4693,68 ms
-Run 5 : 4187,25 ms
-Run 6 : 4158,23 ms
---> Average insertion time for ObjectDB (100000 items) : 4347,32 ms
+Run 1 (WARM-UP - Ignored) : 4072,53 ms
+Run 2 : 3772,74 ms
+Run 3 : 3571,65 ms
+Run 4 : 3592,68 ms
+Run 5 : 3584,87 ms
+Run 6 : 3693,83 ms
+--> Average insertion time for ObjectDB (100000 items) : 3643,15 ms
 
 ==========================================
 Start of the GET benchmark for [ObjectDB] with 100000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 1,58 ms
-Run 2 : 393,74 ms
-Run 3 : 0,76 ms
-Run 4 : 0,63 ms
-Run 5 : 0,97 ms
-Run 6 : 0,66 ms
---> Average GET time for ObjectDB (100000 items) : 79,35 ms
+Run 1 (WARM-UP - Ignored) : 1,33 ms
+Run 2 : 1,28 ms
+Run 3 : 0,72 ms
+Run 4 : 0,69 ms
+Run 5 : 0,90 ms
+Run 6 : 0,62 ms
+--> Average GET time for ObjectDB (100000 items) : 0,84 ms
 
 ==========================================
 Start of the UPDATE benchmark for [ObjectDB] with 100000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 0,98 ms
-Run 2 : 0,43 ms
-Run 3 : 0,40 ms
-Run 4 : 0,28 ms
-Run 5 : 0,24 ms
-Run 6 : 0,27 ms
---> Average UPDATE time for ObjectDB (100000 items) : 0,33 ms
+Run 1 (WARM-UP - Ignored) : 1,12 ms
+Run 2 : 0,36 ms
+Run 3 : 0,29 ms
+Run 4 : 0,36 ms
+Run 5 : 0,36 ms
+Run 6 : 0,21 ms
+--> Average UPDATE time for ObjectDB (100000 items) : 0,31 ms
 
 ==========================================
 Start of the insertion benchmark for [ObjectBox] with 100000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 25287,93 ms
-Run 2 : 21820,66 ms
-Run 3 : 6333,93 ms
-Run 4 : 6500,80 ms
-Run 5 : 7482,58 ms
-Run 6 : 6214,14 ms
---> Average insertion time for ObjectBox (100000 items) : 9670,42 ms
+Run 1 (WARM-UP - Ignored) : 21378,53 ms
+Run 2 : 24028,50 ms
+Run 3 : 6525,85 ms
+Run 4 : 6472,68 ms
+Run 5 : 7605,66 ms
+Run 6 : 6285,73 ms
+--> Average insertion time for ObjectBox (100000 items) : 10183,68 ms
 
 ==========================================
 Start of the GET benchmark for [ObjectBox] with 100000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 0,33 ms
-Run 2 : 0,31 ms
-Run 3 : 0,17 ms
-Run 4 : 0,19 ms
-Run 5 : 0,19 ms
-Run 6 : 0,18 ms
+Run 1 (WARM-UP - Ignored) : 0,37 ms
+Run 2 : 0,14 ms
+Run 3 : 0,20 ms
+Run 4 : 0,18 ms
+Run 5 : 0,27 ms
+Run 6 : 0,24 ms
 --> Average GET time for ObjectBox (100000 items) : 0,21 ms
 
 ==========================================
 Start of the UPDATE benchmark for [ObjectBox] with 100000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 0,51 ms
-Run 2 : 0,41 ms
-Run 3 : 0,51 ms
+Run 1 (WARM-UP - Ignored) : 0,84 ms
+Run 2 : 0,48 ms
+Run 3 : 0,37 ms
 Run 4 : 0,46 ms
-Run 5 : 0,45 ms
-Run 6 : 0,40 ms
---> Average UPDATE time for ObjectBox (100000 items) : 0,44 ms
-
->>> Loading the dataset into memory (1000000 player)...
-Dataset of 1000000 players successfully loaded.
+Run 5 : 0,34 ms
+Run 6 : 0,41 ms
+--> Average UPDATE time for ObjectBox (100000 items) : 0,41 ms
 
 ==========================================
 Start of the insertion benchmark for [PostgreSQL] with 1000000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 665875,12 ms
-Run 2 : 671351,65 ms
-Run 3 : 664602,70 ms
-Run 4 : 669547,83 ms
-Run 5 : 670070,08 ms
-Run 6 : 680254,88 ms
---> Average insertion time for PostgreSQL (1000000 items) : 671165,43 ms
+Run 1 (WARM-UP - Ignored) : 677133,55 ms
+Run 2 : 682626,79 ms
+Run 3 : 682623,66 ms
+Run 4 : 668193,00 ms
+Run 5 : 675750,05 ms
+Run 6 : 664007,00 ms
+--> Average insertion time for PostgreSQL (1000000 items) : 674640,10 ms
 
 ==========================================
 Start of the GET benchmark for [PostgreSQL] with 1000000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 2,50 ms
-Run 2 : 1,48 ms
-Run 3 : 1,61 ms
-Run 4 : 1,68 ms
-Run 5 : 1,53 ms
-Run 6 : 1,58 ms
---> Average GET time for PostgreSQL (1000000 items) : 1,58 ms
+Run 1 (WARM-UP - Ignored) : 4,47 ms
+Run 2 : 1,82 ms
+Run 3 : 1,71 ms
+Run 4 : 1,79 ms
+Run 5 : 1,74 ms
+Run 6 : 1,66 ms
+--> Average GET time for PostgreSQL (1000000 items) : 1,74 ms
 
 ==========================================
 Start of the UPDATE benchmark for [PostgreSQL] with 1000000 players
 ==========================================
-Run 1 (WARM-UP - Ignored) : 2,39 ms
-Run 2 : 1,77 ms
-Run 3 : 2,01 ms
-Run 4 : 1,73 ms
-Run 5 : 1,75 ms
-Run 6 : 1,77 ms
---> Average UPDATE time for PostgreSQL (1000000 items) : 1,80 ms
+Run 1 (WARM-UP - Ignored) : 4,07 ms
+Run 2 : 2,01 ms
+Run 3 : 1,84 ms
+Run 4 : 1,75 ms
+Run 5 : 1,82 ms
+Run 6 : 1,74 ms
+--> Average UPDATE time for PostgreSQL (1000000 items) : 1,83 ms
 
 ==========================================
 Start of the insertion benchmark for [ObjectDB] with 1000000 players
 ==========================================
-Error during execution 1 : Too many persistent objects (>1000000) - exceeds evaluation limit
-Error during execution 2 : Too many persistent objects (>1000000) - exceeds evaluation limit
-Error during execution 3 : Too many persistent objects (>1000000) - exceeds evaluation limit
-Error during execution 4 : Failed to write the value of field ulb.object_db_model.Pokemon.type2 using reflection - field ulb.object_db_model.Team.members
-Error during execution 5 : Failed to invoke constructor 'ulb.object_db_model.Pokemon()' with no args
-[WARNING] 
-java.lang.OutOfMemoryError: Java heap space
-    at com.objectdb.o.CLT.getName (CLT.java:59)
-    at com.objectdb.o.EPR.Y5 (EPR.java:87)
-    at com.objectdb.o.UML.v (UML.java:596)
-    at com.objectdb.o.MMM.L (MMM.java:1100)
-    at com.objectdb.o.UTY.visitRefs (UTY.java:1371)
-    at com.objectdb.o.TVS.e (TVS.java:170)
-    at com.objectdb.o.TVS.cascade (TVS.java:147)
-    at com.objectdb.o.STA.C (STA.java:539)
-    at com.objectdb.o.STM.a (STM.java:413)
-    at com.objectdb.o.OBM.aG (OBM.java:970)
-    at com.objectdb.jdo.PMImpl.aG (PMImpl.java:2277)
-    at com.objectdb.o.OBM.aU (OBM.java:881)
-    at com.objectdb.o.OBM.flush (OBM.java:811)
-    at ulb.dao.ObjectDbDao.insertPlayers (ObjectDbDao.java:62)
-    at ulb.benchmark.BenchmarkRunner.runInsertionBenchmark (BenchmarkRunner.java:30)
-    at ulb.Main.main (Main.java:84)
-    at java.lang.invoke.LambdaForm$DMH/0x0000000026054800.invokeStaticInit (LambdaForm$DMH)
-    at java.lang.invoke.LambdaForm$MH/0x000000002654c000.invoke_MT (LambdaForm$MH)
-    at org.codehaus.mojo.exec.ExecJavaMojo.lambda$execute$0 (ExecJavaMojo.java:283)
-    at org.codehaus.mojo.exec.ExecJavaMojo$$Lambda/0x0000000026547c60.run (Unknown Source)
-    at java.lang.Thread.runWith (Thread.java:1487)
-    at java.lang.Thread.run (Thread.java:1474)
+Error during execution 1 : Error inserting players into ObjectDB
+Error during ObjectDB benchmark : ulb.exception.DaoException: Error inserting players into ObjectDB
+
+==========================================
+Start of the insertion benchmark for [ObjectBox] with 1000000 players
+==========================================
+Run 1 (WARM-UP - Ignored) : 278113,01 ms
+001-17:48:45.3929 [ERROR] Storage error (code -30788)
+Error during execution 2 : Remove failed (-30788)
+Error during ObjectBox benchmark : io.objectbox.exception.DbException: Remove failed (-30788) (error code -30788)
+
+=========================================================================
+                       SUMMARY OF AVERAGE TIMES (MS)                       
+===========================================================================
+Operation  | SGBD            | Taille (N)   | Average Time (ms)   
+---------------------------------------------------------------------------
+INSERT     | PostgreSQL      | 1000         | 505,23              
+GET        | PostgreSQL      | 1000         | 1,46                
+UPDATE     | PostgreSQL      | 1000         | 1,74                
+INSERT     | ObjectDB        | 1000         | 46,98               
+GET        | ObjectDB        | 1000         | 0,60                
+UPDATE     | ObjectDB        | 1000         | 0,33                
+INSERT     | ObjectBox       | 1000         | 95,14               
+GET        | ObjectBox       | 1000         | 0,21                
+UPDATE     | ObjectBox       | 1000         | 0,27                
+INSERT     | PostgreSQL      | 10000        | 5833,41             
+GET        | PostgreSQL      | 10000        | 1,52                
+UPDATE     | PostgreSQL      | 10000        | 2,11                
+INSERT     | ObjectDB        | 10000        | 482,75              
+GET        | ObjectDB        | 10000        | 0,29                
+UPDATE     | ObjectDB        | 10000        | 0,23                
+INSERT     | ObjectBox       | 10000        | 1151,15             
+GET        | ObjectBox       | 10000        | 0,12                
+UPDATE     | ObjectBox       | 10000        | 0,29                
+INSERT     | PostgreSQL      | 100000       | 61100,10            
+GET        | PostgreSQL      | 100000       | 1,73                
+UPDATE     | PostgreSQL      | 100000       | 1,81                
+INSERT     | ObjectDB        | 100000       | 3643,15             
+GET        | ObjectDB        | 100000       | 0,84                
+UPDATE     | ObjectDB        | 100000       | 0,31                
+INSERT     | ObjectBox       | 100000       | 10183,68            
+GET        | ObjectBox       | 100000       | 0,21                
+UPDATE     | ObjectBox       | 100000       | 0,41                
+INSERT     | PostgreSQL      | 1000000      | 674640,10           
+GET        | PostgreSQL      | 1000000      | 1,74                
+UPDATE     | PostgreSQL      | 1000000      | 1,83                
+===========================================================================
+
+Results exported successfully to 'results_benchmark.csv'.

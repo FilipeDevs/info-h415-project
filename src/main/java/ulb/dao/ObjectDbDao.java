@@ -4,6 +4,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
+import ulb.exception.DaoException;
 import ulb.object_db_model.Item;
 import ulb.object_db_model.Player;
 
@@ -50,22 +51,30 @@ public class ObjectDbDao implements BenchmarkDao {
     }
 
     @Override
-    public void insertPlayers(List<Player> players) {
+    public void insertPlayers(List<Player> players) throws DaoException {
         em.getTransaction().begin();
         int count = 0;
 
-        for (Player player : players) {
-            em.persist(player);
+        try {
+            for (Player player : players) {
+                em.persist(player);
 
-            // Regularly flush and clear to avoid keeping everything in the JVM memory.
-            if (++count % 5000 == 0) {
-                em.flush();
-                em.clear();
+                // Regularly flush and clear to avoid keeping everything in the JVM memory.
+                if (++count % 5000 == 0) {
+                    em.flush();
+                    em.clear();
+                }
             }
-        }
 
-        em.getTransaction().commit();
-        em.clear();
+            em.getTransaction().commit();
+            em.clear();
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            em.clear();
+            throw new DaoException("Error inserting players into ObjectDB", e);
+        }
     }
 
     @Override

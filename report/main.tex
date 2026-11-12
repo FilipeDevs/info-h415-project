@@ -481,36 +481,52 @@ The raw timing results collected across all benchmarking suites are summarized i
 	\small
 	\begin{tabular}{lrrrr}
 		\toprule
-		\textbf{DBMS / Operation} & \textbf{1,000 Players} & \textbf{10,000 Players} & \textbf{100,000 Players} & \textbf{1,000,000 Players} \\
+		\textbf{DBMS / Operation} & \textbf{1 000 Players} & \textbf{10 000 Players} & \textbf{100 000 Players} & \textbf{1 000 000 Players} \\
 		\midrule
 		\multicolumn{5}{l}{\textbf{Insertion Average Time (ms)}} \\
-		\quad PostgreSQL & 543.37 & 5439.26 & 61398.77 & 671165.43 \\
-		\quad ObjectDB   & 48.84 & 387.65 & 4347.32 & N/A* \\
-		\quad ObjectBox  & 91.84 & 1108.79 & 9670.42 & N/A* \\
+		\quad PostgreSQL & 505.23 & 5 833.41 & 61 100.10 & 674 640.10 \\
+		\quad ObjectDB   & 46.98 & 482.75 & 3 643.15 & N/A* \\
+		\quad ObjectBox  & 95.14 & 1 151.15 & 10 183.68 & N/A** \\
 		\midrule
 		\multicolumn{5}{l}{\textbf{GET Average Time (ms)}} \\
-		\quad PostgreSQL & 1.38 & 1.42 & 1.57 & 1.58 \\
-		\quad ObjectDB   & 0.54 & 0.54 & 0.66 & N/A* \\
-		\quad ObjectBox  & 0.14 & 0.14 & 0.21 & N/A* \\
+		\quad PostgreSQL & 1.46 & 1.52 & 1.73 & 1.74 \\
+		\quad ObjectDB   & 0.60 & 0.29 & 0.84 & N/A* \\
+		\quad ObjectBox  & 0.21 & 0.12 & 0.21 & N/A** \\
 		\midrule
 		\multicolumn{5}{l}{\textbf{UPDATE Average Time (ms)}} \\
-		\quad PostgreSQL & 1.95 & 1.77 & 1.93 & 1.80 \\
-		\quad ObjectDB   & 0.29 & 0.28 & 0.33 & N/A* \\
-		\quad ObjectBox  & 0.36 & 0.33 & 0.44 & N/A* \\
+		\quad PostgreSQL & 1.74 & 2.11 & 1.81 & 1.83 \\
+		\quad ObjectDB   & 0.33 & 0.23 & 0.31 & N/A* \\
+		\quad ObjectBox  & 0.27 & 0.29 & 0.41 & N/A** \\
 		\bottomrule
 	\end{tabular}
+	\\ * The free evaluation offer for ObjectDB imposes a strict limit of one million entities. \\	
+	** ObjectBox hits native memory-mapped storage limits when handling and resetting a graph of one million players (comprising tens of millions of nested entities).
 	\caption{Benchmark execution results (Average elapsed time in ms over Runs 2--6)}
 	\label{tab:benchmark_results}
 \end{table}
 
-* The free evaluation offer for ObjectDB imposes a strict limit of one million entities. ObjectBox, meanwhile, hits native memory limits when persisting a graph containing fewer than one million entities.
+Overall, both object-oriented systems outperform PostgreSQL by approximately an order of magnitude when it comes to the large-scale persistence of graphs, and by a factor of 2 to 10 for individual read and update operations under steady-state conditions, with up to 100 000 players.
 
 \subsection{Scalability analysis}
 
 \subsubsection{Insertion rate and scaling of complex objects}
 Insertion latency highlights the fundamental architectural divergence between relational decomposition and object graph persistence:
 
+\begin{itemize}
+	\item \textbf{PostgreSQL:} Insertion time grows almost linearly from $505.23\text{ ms}$ at $1\text{K}$ to 674 640.10\text{ ms} at 1M ($1.33 \approx 1$ from $1\text{K}$ to 1M). Throughput peaks at $\approx 1\,980\text{ players/s}$ at $1\text{K}$ (and $\approx 1\,714\text{ players/s}$ at $10\text{K}$) and declines to $\approx 1\,482\text{ players/s}$ at $1\text{M}$. Even with JDBC batch rewriting enabled (\texttt{reWrite\-BatchedInserts=true}), persisting a single \texttt{Player} object graph requires flattening nested collections into normalized rows across four tables (\texttt{players}, \texttt{teams}, \texttt{team\_members}, and \texttt{item\_player}), validating foreign key constraints, to write records to the transaction log via a TCP socket, etc.
+	
+	\item \textbf{ObjectDB:} ObjectDB achieves the highest ingestion throughput across all completed scales, running $10.75\times$ faster than PostgreSQL at $1\text{K}$ ($46.98\text{ ms}$), $12.08\times$ faster at $10\text{K}$ ($482.75\text{ ms}$, scaling linearly by $10.28\times$), and $16.77\times$ faster at $100\text{K}$ ($3\,643.15\text{ ms}$, roughly $27\,450\text{ players/s}$). Because \texttt{Pokemon} and \texttt{Item} are stored as \texttt{@Embeddable} value objects and \texttt{Team} relationships use \texttt{CascadeType.ALL}, ObjectDB traverses the reachability graph in memory and writes contiguous object pages directly into a single \texttt{.odb} file without join-table fan-out.
+	
+	\item \textbf{ObjectBox:} ObjectBox completes insertions $5.07\times$ to $6.00\times$ faster than PostgreSQL ($95.14\text{ ms}$ at $1\text{K}$, $1\,151.15\text{ ms}$ at $10\text{K}$, and $10\,183.68\text{ ms}$ at $100\text{K}$), but remains $2.03\times$ to $2.80\times$ slower than ObjectDB. Two factors explain this gap. First, ObjectBox lacks native embedded maps, requiring player inventories to be decomposed into explicit \texttt{InventoryEntry} entities linked via \texttt{ToOne} and \texttt{ToMany} relations inside \texttt{store.runInTx()}. Second, the raw traces reveal consistent post-warmup latency on Run~2 ($225.52\text{ ms}$ at $1\text{K}$, $2\,869.86\text{ ms}$ at $10\text{K}$, and $24\,028.50\text{ ms}$ at $100\text{K}$) caused by memory-mapped store expansion; once stabilized in Runs~3--6, ObjectBox averages $62.54\text{ ms}$, $721.47\text{ ms}$, and $6\,722.48\text{ ms}$, respectively.
+\end{itemize}
+
+\subsubsection{Point retrieval (GET) and graph traversal latency}
+Point retrieval measures the cost of locating a single \texttt{Player} by identifier and reconstructing its complete object graph (owned teams, team rosters, and inventory items):
+
+
 \subsubsection{Entity updates and transactional persistence}
+Transactional updates evaluate the overhead of mutating an existing persistent player state and committing the change to durable storage:
+
 
 \subsection{Critical analysis by DBMS}
 
@@ -519,7 +535,6 @@ Insertion latency highlights the fundamental architectural divergence between re
 \subsubsection{ObjectDB}
 
 \subsubsection{ObjectBox}
-
 
 \section{Overall Assessment: Pros and Cons}
 \subsection{Comparison table}

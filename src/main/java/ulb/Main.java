@@ -63,42 +63,53 @@ public class Main {
                 return;
             }
 
-            System.out.printf("%n>>> Loading the dataset into memory (%d player)...%n", size);
-            List<Player> dataset = loadDataset(jsonPath);
-            System.out.printf("Dataset of %d players successfully loaded.%n", dataset.size());
-
             // Benchmark PostgreSQL
             try (PostgresDao pgDao = new PostgresDao(PG_URL, PG_USER, PG_PASSWORD)) {
                 pgDao.init();
-                double avgTime = benchmarkRunner.runInsertionBenchmark(pgDao, () -> loadDataset(jsonPath), POSTGRESQL_NAME,
+                double avgTime = benchmarkRunner.runInsertionBenchmark(pgDao, () -> loadDataset(jsonPath),
+                        POSTGRESQL_NAME,
                         size);
                 results.add(new BenchmarkResult(INSERT, POSTGRESQL_NAME, size, avgTime));
+
+                triggerGc();
+                List<Player> dataset = loadDataset(jsonPath);
                 runReadAndUpdateBenchmarks(benchmarkRunner, pgDao, dataset, POSTGRESQL_NAME, size, results);
-            } catch (Exception e) {
-                System.err.println("Error during PostgreSQL benchmark : " + e.getMessage());
+            } catch (Throwable t) {
+                System.err.println("Error during PostgreSQL benchmark : " + t.getMessage());
             }
+            triggerGc();
 
             // Benchmark ObjectDB
             try (ObjectDbDao odbDao = new ObjectDbDao(OBJECTDB_PATH)) {
                 odbDao.init();
-                double avgTime = benchmarkRunner.runInsertionBenchmark(odbDao, () -> loadDataset(jsonPath), OBJECT_DB_NAME,
+                double avgTime = benchmarkRunner.runInsertionBenchmark(odbDao, () -> loadDataset(jsonPath),
+                        OBJECT_DB_NAME,
                         size);
                 results.add(new BenchmarkResult(INSERT, OBJECT_DB_NAME, size, avgTime));
+
+                triggerGc();
+                List<Player> dataset = loadDataset(jsonPath);
                 runReadAndUpdateBenchmarks(benchmarkRunner, odbDao, dataset, OBJECT_DB_NAME, size, results);
-            } catch (Exception e) {
-                System.err.println("Error during ObjectDB benchmark : " + e.getMessage());
+            } catch (Throwable t) {
+                System.err.println("Error during ObjectDB benchmark : " + t.getMessage());
             }
+            triggerGc();
 
             // Benchmark ObjectBox
             try (ObjectBoxDao obxDao = new ObjectBoxDao(OBJECTBOX_DIR)) {
                 obxDao.init();
-                double avgTime = benchmarkRunner.runInsertionBenchmark(obxDao, () -> loadDataset(jsonPath), OBJECT_BOX_NAME,
+                double avgTime = benchmarkRunner.runInsertionBenchmark(obxDao, () -> loadDataset(jsonPath),
+                        OBJECT_BOX_NAME,
                         size);
                 results.add(new BenchmarkResult(INSERT, OBJECT_BOX_NAME, size, avgTime));
+
+                triggerGc();
+                List<Player> dataset = loadDataset(jsonPath);
                 runReadAndUpdateBenchmarks(benchmarkRunner, obxDao, dataset, OBJECT_BOX_NAME, size, results);
-            } catch (Exception e) {
-                System.err.println("Error during ObjectBox benchmark : " + e.getMessage());
+            } catch (Throwable t) {
+                System.err.println("Error during ObjectBox benchmark : " + t.getMessage());
             }
+            triggerGc();
         }
 
         printSummaryTable(results);
@@ -110,6 +121,8 @@ public class Main {
 
         double getTime = benchmarkRunner.runGetBenchmark(dao, dataset, systemName, datasetSize);
         results.add(new BenchmarkResult("GET", systemName, datasetSize, getTime));
+
+        triggerGc();
 
         double updateTime = benchmarkRunner.runUpdateBenchmark(dao, dataset, systemName, datasetSize);
         results.add(new BenchmarkResult("UPDATE", systemName, datasetSize, updateTime));
@@ -179,6 +192,15 @@ public class Main {
             System.out.printf("Results exported successfully to '%s'.%n", csvPath);
         } catch (IOException e) {
             System.err.println("Error while exporting the CSV file: " + e.getMessage());
+        }
+    }
+
+    private static void triggerGc() {
+        System.gc();
+        try {
+            Thread.sleep(150);
+        } catch (InterruptedException _) {
+            Thread.currentThread().interrupt();
         }
     }
 }

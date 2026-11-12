@@ -39,6 +39,7 @@ public class BenchmarkRunner {
 
             } catch (Exception e) {
                 System.err.printf("Error during execution %d : %s%n", i, e.getMessage());
+                throw new RuntimeException(e);
             }
         }
 
