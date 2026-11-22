@@ -9,7 +9,11 @@
 \usepackage{algorithmic}
 \usepackage{listings}
 \usepackage{tikz}
+\usepackage{tabularx}
 \usepackage{booktabs}
+\usepackage{ragged2e}
+\usepackage{float}
+\newcolumntype{L}{>{\RaggedRight\arraybackslash}X}
 \usetikzlibrary{positioning, arrows.meta, fit, backgrounds}
 
 \geometry{top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
@@ -25,35 +29,35 @@
 
 \begin{document}
 \begin{titlepage}
-    \begin{center}
-        \vspace*{2cm}
+  \begin{center}
+    \vspace*{2cm}
 
-        \Huge
-        \textbf{Advanced Databases}
-        \vspace{0.25cm}
+    \Huge
+    \textbf{Advanced Databases}
+    \vspace{0.25cm}
 
-        \LARGE
-        \textbf{INFO-H-415}
+    \LARGE
+    \textbf{INFO-H-415}
 
-        \vspace{0.25cm}
-        \LARGE
-        Object-oriented databases with ObjectDB and ObjectBox
+    \vspace{0.25cm}
+    \LARGE
+    Object-oriented databases with ObjectDB and ObjectBox
 
-        \vspace{0.25cm}
-        \textit{14 December 2026}
+    \vspace{0.25cm}
+    \textit{14 December 2026}
 
-        \vspace{2cm}
-           \Large
-        \textbf{Amine Ayadi}\\
-		\textbf{Martin Gouverneur}\\
-		\textbf{Filipe Pereira Martins}\\
-		\textbf{Ethan Van Ruyskensvelde}\\
+    \vspace{2cm}
+    \Large
+    \textbf{Amine Ayadi}\\
+    \textbf{Martin Gouverneur}\\
+    \textbf{Filipe Pereira Martins}\\
+    \textbf{Ethan Van Ruyskensvelde}\\
 
-        \vspace{2cm}
+    \vspace{2cm}
 
-        \textsc{Université Libre de Bruxelles (ULB)}
+    \textsc{Université Libre de Bruxelles (ULB)}
 
-    \end{center}
+  \end{center}
 \end{titlepage}
 
 \tableofcontents
@@ -74,62 +78,62 @@ Objects also point directly at one another. When an object holds a collection of
 The relational model works only with values that happen to match. The link has to be stored as a foreign key, and rebuilt every time it is needed by joining two tables. What is a single step in the application becomes a whole operation on sets in the database.
 
 \begin{figure}[htbp]
-\centering
-\begin{tikzpicture}[
-    font=\small,
-    obj/.style={draw, rounded corners, align=center, inner sep=5pt,
-                minimum width=2.6cm, minimum height=0.9cm},
-    ptr/.style={-{Stealth[length=2.2mm]}, thick},
-    match/.style={-{Stealth[length=2.2mm]}, dashed, gray!70!black},
-    tbl/.style={draw, inner sep=0pt}
-]
+  \centering
+  \begin{tikzpicture}[
+      font=\small,
+      obj/.style={draw, rounded corners, align=center, inner sep=5pt,
+          minimum width=2.6cm, minimum height=0.9cm},
+      ptr/.style={-{Stealth[length=2.2mm]}, thick},
+      match/.style={-{Stealth[length=2.2mm]}, dashed, gray!70!black},
+      tbl/.style={draw, inner sep=0pt}
+    ]
 
-% ---------------- left: object graph ----------------
-\node[obj] (cust)  at (0,0)      {\texttt{Customer}};
-\node[obj] (order) at (0,-1.9)   {\texttt{Order}};
-\node[obj] (l1)    at (-1.5,-3.8){\texttt{Line}};
-\node[obj] (l2)    at ( 1.5,-3.8){\texttt{Line}};
-\draw[ptr] (order) -- (cust);
-\draw[ptr] (order) -- (l1);
-\draw[ptr] (order) -- (l2);
+    % ---------------- left: object graph ----------------
+    \node[obj] (cust)  at (0,0)      {\texttt{Customer}};
+    \node[obj] (order) at (0,-1.9)   {\texttt{Order}};
+    \node[obj] (l1)    at (-1.5,-3.8){\texttt{Line}};
+    \node[obj] (l2)    at ( 1.5,-3.8){\texttt{Line}};
+    \draw[ptr] (order) -- (cust);
+    \draw[ptr] (order) -- (l1);
+    \draw[ptr] (order) -- (l2);
 
-\node[align=center, font=\footnotesize\itshape] at (0,-5)
-     {object graph\\(links are references)};
+    \node[align=center, font=\footnotesize\itshape] at (0,-5)
+    {object graph\\(links are references)};
 
-% ---------------- right: tables ----------------
-\node[tbl] (tcust) at (7.5,0.1)
-  {\begin{tabular}{|l|l|}
-     \hline
-     \multicolumn{2}{|c|}{\textbf{customers}}\\
-     \hline
-     \texttt{id} & \texttt{name}\\
-     \hline
-   \end{tabular}};
-\node[tbl] (tord) at (7.5,-1.9)
-  {\begin{tabular}{|l|l|}
-     \hline
-     \multicolumn{2}{|c|}{\textbf{orders}}\\
-     \hline
-     \texttt{id} & \texttt{customer\_id}\\
-     \hline
-   \end{tabular}};
-\node[tbl] (tline) at (7.5,-3.9)
-  {\begin{tabular}{|l|l|}
-     \hline
-     \multicolumn{2}{|c|}{\textbf{lines}}\\
-     \hline
-     \texttt{id} & \texttt{order\_id}\\
-     \hline
-   \end{tabular}};
-\draw[match] (tord)  -- node[right, font=\footnotesize] {join} (tcust);
-\draw[match] (tline) -- node[right, font=\footnotesize] {join} (tord);
-\node[align=center, font=\footnotesize\itshape] at (7.5,-5)
-     {relational tables\\(links are matching values)};
+    % ---------------- right: tables ----------------
+    \node[tbl] (tcust) at (7.5,0.1)
+    {\begin{tabular}{|l|l|}
+        \hline
+        \multicolumn{2}{|c|}{\textbf{customers}} \\
+        \hline
+        \texttt{id} & \texttt{name}              \\
+        \hline
+      \end{tabular}};
+    \node[tbl] (tord) at (7.5,-1.9)
+    {\begin{tabular}{|l|l|}
+        \hline
+        \multicolumn{2}{|c|}{\textbf{orders}} \\
+        \hline
+        \texttt{id} & \texttt{customer\_id}   \\
+        \hline
+      \end{tabular}};
+    \node[tbl] (tline) at (7.5,-3.9)
+    {\begin{tabular}{|l|l|}
+        \hline
+        \multicolumn{2}{|c|}{\textbf{lines}} \\
+        \hline
+        \texttt{id} & \texttt{order\_id}     \\
+        \hline
+      \end{tabular}};
+    \draw[match] (tord)  -- node[right, font=\footnotesize] {join} (tcust);
+    \draw[match] (tline) -- node[right, font=\footnotesize] {join} (tord);
+    \node[align=center, font=\footnotesize\itshape] at (7.5,-5)
+    {relational tables\\(links are matching values)};
 
-\end{tikzpicture}
+  \end{tikzpicture}
 
-\caption{The same data as an object graph and as relational tables.}
-\label{fig:graph-vs-tables}
+  \caption{The same data as an object graph and as relational tables.}
+  \label{fig:graph-vs-tables}
 \end{figure}
 
 Three other features of object oriented principles have no equivalent in the relational model. Inheritance has to be flattened onto tables, and there are several ways to do it, with each one trading storage space for query speed.
@@ -148,7 +152,7 @@ allow objects to be stored without being transformed. This section presents them
 one by one.
 
 \paragraph{Object identity:} Every object that is stored receives an \emph{object
-identifier} (OID). It is assigned by the database itself, it is unique and it
+  identifier} (OID). It is assigned by the database itself, it is unique and it
 never changes during the life of the object. Since it is independent of the
 values the object holds, two objects with the same content remain distinct, and
 an object can have all of its fields modified while still being recognised as the
@@ -180,43 +184,43 @@ persistent as well, and so on recursively. The application therefore stores a
 structure in one operation instead of saving each part in the right order.
 
 \begin{figure}[htbp]
-\centering
-\begin{tikzpicture}[
-    font=\small,
-    obj/.style={draw, rounded corners, align=center, inner sep=5pt,
-                minimum width=2.4cm, minimum height=0.9cm},
-    root/.style={obj, fill=gray!15, very thick},
-    ptr/.style={-{Stealth[length=2.2mm]}, thick}
-]
+  \centering
+  \begin{tikzpicture}[
+      font=\small,
+      obj/.style={draw, rounded corners, align=center, inner sep=5pt,
+          minimum width=2.4cm, minimum height=0.9cm},
+      root/.style={obj, fill=gray!15, very thick},
+      ptr/.style={-{Stealth[length=2.2mm]}, thick}
+    ]
 
-\node[root] (order) at (0,0)      {\texttt{Order}};
-\node[obj]  (cust)  at (-2.4,-2)  {\texttt{Customer}};
-\node[obj]  (line)  at (2.4,-2)   {\texttt{Line}};
-\node[obj]  (prod)  at (2.4,-3.9) {\texttt{Product}};
+    \node[root] (order) at (0,0)      {\texttt{Order}};
+    \node[obj]  (cust)  at (-2.4,-2)  {\texttt{Customer}};
+    \node[obj]  (line)  at (2.4,-2)   {\texttt{Line}};
+    \node[obj]  (prod)  at (2.4,-3.9) {\texttt{Product}};
 
-\draw[ptr] (order) -- (cust);
-\draw[ptr] (order) -- (line);
-\draw[ptr] (line)  -- (prod);
+    \draw[ptr] (order) -- (cust);
+    \draw[ptr] (order) -- (line);
+    \draw[ptr] (line)  -- (prod);
 
-\node[anchor=west, font=\footnotesize\itshape] at (1.4,0) {explicitly saved};
+    \node[anchor=west, font=\footnotesize\itshape] at (1.4,0) {explicitly saved};
 
-\begin{scope}[on background layer]
-  \node[draw, dashed, rounded corners, inner sep=11pt,
+    \begin{scope}[on background layer]
+      \node[draw, dashed, rounded corners, inner sep=11pt,
         fit=(cust)(line)(prod)] (reach) {};
-\end{scope}
+    \end{scope}
 
-\node[anchor=north, font=\footnotesize\itshape] at (reach.south)
-     {stored as well, because they are reachable};
+    \node[anchor=north, font=\footnotesize\itshape] at (reach.south)
+    {stored as well, because they are reachable};
 
-\end{tikzpicture}
-\caption{Persistence by reachability}
-\label{fig:reachability}
+  \end{tikzpicture}
+  \caption{Persistence by reachability}
+  \label{fig:reachability}
 \end{figure}
 
 \paragraph{Navigation and queries:} Data can be accessed in two different
 ways. \emph{Navigation} starts from one object and follows its references, which
 suits operations that explore a known part of the structure. \emph{Declarative
-queries} describe a condition and let the database find the matching objects,
+  queries} describe a condition and let the database find the matching objects,
 which is suited for operations that search the whole database. Relational databases offer
 only the second, while object-oriented systems offer both.
 
@@ -232,21 +236,21 @@ Object-oriented databases got their definition in 1989, from a paper known as th
 The authors listed thirteen features that a system must have to deserve the name.
 Eight of them come from object orientation itself, namely complex objects, object
 identity, encapsulation, types and classes, inheritance, overriding, extensibility
-and computational completeness. 
+and computational completeness.
 The other five are what any database is expected to do, like storing data persistently, managing secondary storage, handling
 concurrent access, recovering after a failure and answering ad hoc queries.
 
-A group of vendors then tried to agree on a common standard. 
-They formed the Object Data Management Group in 1991 and published a specification with an object model, 
-a definition language (ODL), a query language close to SQL (OQL) and bindings for C++, Smalltalk and Java. 
+A group of vendors then tried to agree on a common standard.
+They formed the Object Data Management Group in 1991 and published a specification with an object model,
+a definition language (ODL), a query language close to SQL (OQL) and bindings for C++, Smalltalk and Java.
 The last version, ODMG 3.0, came out in 2000\cite{odmg}. A year later the group gave its Java binding to the Java
 Community Process, where it became JDO, and then shut down. JDO was eventually succeeded by the Java Persistence API (JPA).
 
-JPA was built for mapping objects onto relational tables, and it is normally used with a framework like Hibernate. 
+JPA was built for mapping objects onto relational tables, and it is normally used with a framework like Hibernate.
 But it only describes how the application talks to the database, not how the data is stored, so a real object database can
-implement it too. 
-ObjectDB does exactly that, which means that seeing JPA in the code does not imply there is a relational database underneath. 
-What matters most is that today no single standard is followed by everyone. ObjectDB uses JPA, while ObjectBox has its own API 
+implement it too.
+ObjectDB does exactly that, which means that seeing JPA in the code does not imply there is a relational database underneath.
+What matters most is that today no single standard is followed by everyone. ObjectDB uses JPA, while ObjectBox has its own API
 and follows no standard at all.
 
 \subsection{Relational Model (RDBMS) vs. Object-Oriented Model (OODBMS)}
@@ -255,28 +259,28 @@ The two models can be compared on a small number of axes. \textbf{Table \ref{tab
 this project.
 
 \begin{table}[htbp]
-\centering
-\begin{tabular}{|l|p{4.3cm}|p{4.3cm}|}
-\hline
- & \textbf{Relational} & \textbf{Object-oriented}\\
-\hline
-Data model & tables of rows holding atomic values & objects holding attributes and collections\\
-\hline
-Identity & primary key taken from the data & identifier assigned by the system\\
-\hline
-Relationships & foreign keys, rebuilt by joins & references, followed in one step\\
-\hline
-Inheritance & mapped onto tables & part of the stored schema\\
-\hline
-Query language & SQL, standardised and universal & specific to each product\\
-\hline
-Schema evolution & mature tooling and migrations & depends on the product\\
-\hline
-Ecosystem & very large & small\\
-\hline
-\end{tabular}
-\caption{The two models compared.}
-\label{tab:comparison}
+  \centering
+  \begin{tabular}{|l|p{4.3cm}|p{4.3cm}|}
+    \hline
+                     & \textbf{Relational}                  & \textbf{Object-oriented}                   \\
+    \hline
+    Data model       & tables of rows holding atomic values & objects holding attributes and collections \\
+    \hline
+    Identity         & primary key taken from the data      & identifier assigned by the system          \\
+    \hline
+    Relationships    & foreign keys, rebuilt by joins       & references, followed in one step           \\
+    \hline
+    Inheritance      & mapped onto tables                   & part of the stored schema                  \\
+    \hline
+    Query language   & SQL, standardised and universal      & specific to each product                   \\
+    \hline
+    Schema evolution & mature tooling and migrations        & depends on the product                     \\
+    \hline
+    Ecosystem        & very large                           & small                                      \\
+    \hline
+  \end{tabular}
+  \caption{The two models compared.}
+  \label{tab:comparison}
 \end{table}
 
 \paragraph{Cost of following a relationship:} The cost of a join increases with the
@@ -295,8 +299,8 @@ derived from the classes themselves, which then removes a source of duplication,
 changing those classes once data exists is handled differently by each product.
 
 \paragraph{Maturity of the ecosystem:} Relational systems are backed by
-decades of tooling and research. Object-oriented systems are less mature since they have been around for a shorter time, 
-have smaller communities, less documentation and little external tool support. 
+decades of tooling and research. Object-oriented systems are less mature since they have been around for a shorter time,
+have smaller communities, less documentation and little external tool support.
 This is not really relevant to the technical qualities of either model, but it is a point of consideration when making a practical choice.
 
 \section{Overview of the DBMS Studied}
@@ -410,7 +414,8 @@ by identifier, \texttt{remove} to delete. In contrast to ObjectDB, modifications
 to a Java object do not affect the database, the object has to be written back to
 its box explicitly.
 
-\begin{lstlisting}[language=Java]
+\noindent\begin{minipage}{\textwidth}
+  \begin{lstlisting}[language=Java]
 @Entity
 public class Player {
     @Id private long id;
@@ -419,6 +424,7 @@ public class Player {
     private ToMany<Team> teams;
 }
 \end{lstlisting}
+\end{minipage}
 
 \begin{lstlisting}[language=Java]
 Box<Player> playerBox = store.boxFor(Player.class);
@@ -537,8 +543,8 @@ reassembling it with joins on every read.
 \subsection{Description of the application domain}
 The application domain selected for this benchmark is inspired by a multiplayer online role-playing game (RPG) system modeled after the Pokemon franchise. In this context, persistent storage must support two distinct categories of data:
 \begin{enumerate}
-    \item \textbf{Static reference data}: immutable entities representing Pokemon (with a name, a type, a speed, ...) and item definitions (name of the item and its description).
-    \item \textbf{Dynamic player state}: mutable user data tracking account credentials, active team selections, customized teams and inventory management.
+  \item \textbf{Static reference data}: immutable entities representing Pokemon (with a name, a type, a speed, ...) and item definitions (name of the item and its description).
+  \item \textbf{Dynamic player state}: mutable user data tracking account credentials, active team selections, customized teams and inventory management.
 \end{enumerate}
 
 This domain serves as an ideal case study for comparing Object-Oriented Database Management Systems (OODBMS) with traditional Relational Database Management Systems (RDBMS). Player profiles exhibit a high degree of structural complexity, including nested collections of variable length (such as lists of team members or associations between inventory items and their quantities), object composition, and complex references between entities.
@@ -550,36 +556,36 @@ To compare the relational approach with implementations in object-oriented datab
 \subsubsection{Conceptual Domain Model}
 Conceptually, the domain models player management and in-game inventory through relationships between entities and complex data structures:
 \begin{itemize}
-	\item \textbf{Player}: Represents a user account identified by a unique \texttt{playername}, storing an authentication hash (\texttt{passwordHash}), an active team reference (\texttt{currentTeam}), a collection of saved teams (\texttt{teams}), and an inventory mapping items to quantities.
-	\item \textbf{Team}: Defines a named user team (\texttt{name}) containing an ordered list of 1 to 6 Pokemon members.
-	\item \textbf{Pokemon}: Represents game creatures defined by base stats (\texttt{hp}, \texttt{attack}, \texttt{defense}, \texttt{spAtk}, \texttt{spDef}, \texttt{speed}), typing (\texttt{type1}, \texttt{type2}), generation, and legendary status.
-	\item \textbf{Item}: Represents consumable or collectible items with a unique \texttt{id}, \texttt{name}, and \texttt{description}.
-	\end{itemize}
-		
-		\subsubsection{Relational Data Model (PostgreSQL Baseline)}
-		In the relational model, object structures with nested collections and references must be decomposed into Third Normal Form (3NF) relational tables linked by foreign key constraints:
-		\begin{itemize}
-			\item \texttt{pokemons} \& \texttt{items}: Catalog tables holding static reference data indexed by primary keys (\texttt{id} and \texttt{item\_id}).
-			\item \texttt{players}: Stores user account details and holds a foreign key \texttt{(playername, current\_team)} referencing the player's active team in the \texttt{teams} table.
-			\item \texttt{teams}: Maps each team to its owner via \texttt{playername}, using a composite primary key \texttt{(playername, name)}.
-			\item \texttt{team\_members}: Junction table modeling the list of Pokemon within a team, storing \texttt{(playername, team\_name, pokemon\_id, slot\_position)}.
-			\item \texttt{item\_player}: Junction table representing player inventories, mapping \texttt{playername} and \texttt{item\_id} alongside an \texttt{amount} attribute.
-		\end{itemize}
-		
-		\subsubsection{Object-Oriented Data Model (ObjectDB / JPA)}
-		ObjectDB leverages standard Java Persistence API (JPA) annotations to persist an object graph directly, while preserving object integrity without resorting to relational normalization:
-		\begin{itemize}
-			\item \textbf{Entities vs. Embeddables}: \texttt{Player} and \texttt{Team} are declared as standalone persistent entities (\texttt{@Entity}). \texttt{Pokemon} and \texttt{Item} are lightweight value objects decorated with \texttt{@Embeddable}.
-			\item \textbf{Direct Collection \& Map Storage}: Player inventories are mapped directly as a key-value map using \texttt{@ElementCollection Map<Item, Integer>}. Team membership lists (\texttt{List}) are embedded directly within the parent \texttt{Team} instance.
-			\item \textbf{Object Relationships}: Relationships are defined using cascade options (\texttt{CascadeType.ALL}) associated with \texttt{@OneToMany} and \texttt{@OneToOne}, which enables full persistence by reachability when saving a \texttt{Player} object.
-		\end{itemize}
-		
-		\subsubsection{Embedded Object Data Model (ObjectBox)}
-		ObjectBox implements a standalone object-oriented storage system, optimized for low-latency embedded execution:
-		\begin{itemize}
-			\item \textbf{Relations}: Uses \texttt{ToOne} and \texttt{ToMany} smart relation wrappers to handle directed graph edges.
-			\item \textbf{Map Decomposition}: Because ObjectBox natively supports entity-to-entity relations rather than arbitrary key-value Java maps, inventories are explicitly modeled using an intermediate \texttt{InventoryEntry} entity containing a \texttt{ToOne} relation and an integer quantity field.
-		\end{itemize}
+  \item \textbf{Player}: Represents a user account identified by a unique \texttt{playername}, storing an authentication hash (\texttt{passwordHash}), an active team reference (\texttt{currentTeam}), a collection of saved teams (\texttt{teams}), and an inventory mapping items to quantities.
+  \item \textbf{Team}: Defines a named user team (\texttt{name}) containing an ordered list of 1 to 6 Pokemon members.
+  \item \textbf{Pokemon}: Represents game creatures defined by base stats (\texttt{hp}, \texttt{attack}, \texttt{defense}, \texttt{spAtk}, \texttt{spDef}, \texttt{speed}), typing (\texttt{type1}, \texttt{type2}), generation, and legendary status.
+  \item \textbf{Item}: Represents consumable or collectible items with a unique \texttt{id}, \texttt{name}, and \texttt{description}.
+\end{itemize}
+
+\subsubsection{Relational Data Model (PostgreSQL Baseline)}
+In the relational model, object structures with nested collections and references must be decomposed into Third Normal Form (3NF) relational tables linked by foreign key constraints:
+\begin{itemize}
+  \item \texttt{pokemons} \& \texttt{items}: Catalog tables holding static reference data indexed by primary keys (\texttt{id} and \texttt{item\_id}).
+  \item \texttt{players}: Stores user account details and holds a foreign key \texttt{(playername, current\_team)} referencing the player's active team in the \texttt{teams} table.
+  \item \texttt{teams}: Maps each team to its owner via \texttt{playername}, using a composite primary key \texttt{(playername, name)}.
+  \item \texttt{team\_members}: Junction table modeling the list of Pokemon within a team, storing \texttt{(playername, team\_name, pokemon\_id, slot\_position)}.
+  \item \texttt{item\_player}: Junction table representing player inventories, mapping \texttt{playername} and \texttt{item\_id} alongside an \texttt{amount} attribute.
+\end{itemize}
+
+\subsubsection{Object-Oriented Data Model (ObjectDB / JPA)}
+ObjectDB leverages standard Java Persistence API (JPA) annotations to persist an object graph directly, while preserving object integrity without resorting to relational normalization:
+\begin{itemize}
+  \item \textbf{Entities vs. Embeddables}: \texttt{Player} and \texttt{Team} are declared as standalone persistent entities (\texttt{@Entity}). \texttt{Pokemon} and \texttt{Item} are lightweight value objects decorated with \texttt{@Embeddable}.
+  \item \textbf{Direct Collection \& Map Storage}: Player inventories are mapped directly as a key-value map using \texttt{@ElementCollection Map<Item, Integer>}. Team membership lists (\texttt{List}) are embedded directly within the parent \texttt{Team} instance.
+  \item \textbf{Object Relationships}: Relationships are defined using cascade options (\texttt{CascadeType.ALL}) associated with \texttt{@OneToMany} and \texttt{@OneToOne}, which enables full persistence by reachability when saving a \texttt{Player} object.
+\end{itemize}
+
+\subsubsection{Embedded Object Data Model (ObjectBox)}
+ObjectBox implements a standalone object-oriented storage system, optimized for low-latency embedded execution:
+\begin{itemize}
+  \item \textbf{Relations}: Uses \texttt{ToOne} and \texttt{ToMany} smart relation wrappers to handle directed graph edges.
+  \item \textbf{Map Decomposition}: Because ObjectBox natively supports entity-to-entity relations rather than arbitrary key-value Java maps, inventories are explicitly modeled using an intermediate \texttt{InventoryEntry} entity containing a \texttt{ToOne} relation and an integer quantity field.
+\end{itemize}
 
 \subsection{Software architecture}
 The system architecture is engineered to provide a strictly fair and reproducible evaluation across the benchmarked database systems. It decouples dataset generation, object model management, and database execution through modular design patterns.
@@ -587,17 +593,17 @@ The system architecture is engineered to provide a strictly fair and reproducibl
 \subsubsection{Architectural Overview}
 The software adopts a multi-level architecture, structured around three key layers:
 \begin{enumerate}
-	\item \textbf{Data Generation Tier}: Reads static CSV files (\texttt{pokemons.csv}, \texttt{items.csv}) and deterministically constructs player object graphs serialized into JSON files (\texttt{DatasetGenerator}).
-	\item \textbf{DAO Layer (Data Access Object)}: Encapsulates database-specific persistence, retrieval, and schema management logic behind a common interface (\texttt{BenchmarkDao}).
-	\item \textbf{Benchmarking Engine}: Orchestrates dataset loading, database cleanup, transaction boundary controls, warm-up iterations, and the measurement of execution time (\texttt{BenchmarkRunner}).
+  \item \textbf{Data Generation Tier}: Reads static CSV files (\texttt{pokemons.csv}, \texttt{items.csv}) and deterministically constructs player object graphs serialized into JSON files (\texttt{DatasetGenerator}).
+  \item \textbf{DAO Layer (Data Access Object)}: Encapsulates database-specific persistence, retrieval, and schema management logic behind a common interface (\texttt{BenchmarkDao}).
+  \item \textbf{Benchmarking Engine}: Orchestrates dataset loading, database cleanup, transaction boundary controls, warm-up iterations, and the measurement of execution time (\texttt{BenchmarkRunner}).
 \end{enumerate}
 
 \subsubsection{Design Patterns and Implementation Details}
 % TODO: mettre à jour pour le reste des benchmarks (update et get)
 \begin{itemize}
-	\item \textbf{Data Access Object (DAO) Pattern}: The \texttt{BenchmarkDao} interface exposes four primary operations: \texttt{init()}, \texttt{clearDatabase()}, \texttt{insertPlayers(List)}, and \texttt{close()}. This abstraction guarantees that the benchmarking execution loop remains entirely decoupled from concrete persistence drivers.
-	\item \textbf{Relational Batch Optimizations}: The \texttt{PostgresDao} implementation utilizes JDBC prepared statement batching along with the \texttt{reRewriteBatchedInserts=true} connection property to optimize relational multi-row insertions.
-	\item \textbf{Object-Oriented Transaction Management}: \texttt{ObjectDbDao} manages persistence through an active JPA \texttt{EntityManager} transaction, utilizing cascade persistence to automatically persist complete player reachability graphs. \texttt{ObjectBoxDao} executes atomic batch put operations inside native \texttt{store.runInTx()} blocks.
+  \item \textbf{Data Access Object (DAO) Pattern}: The \texttt{BenchmarkDao} interface exposes four primary operations: \texttt{init()}, \texttt{clearDatabase()}, \texttt{insertPlayers(List)}, and \texttt{close()}. This abstraction guarantees that the benchmarking execution loop remains entirely decoupled from concrete persistence drivers.
+  \item \textbf{Relational Batch Optimizations}: The \texttt{PostgresDao} implementation utilizes JDBC prepared statement batching along with the \texttt{reRewriteBatchedInserts=true} connection property to optimize relational multi-row insertions.
+  \item \textbf{Object-Oriented Transaction Management}: \texttt{ObjectDbDao} manages persistence through an active JPA \texttt{EntityManager} transaction, utilizing cascade persistence to automatically persist complete player reachability graphs. \texttt{ObjectBoxDao} executes atomic batch put operations inside native \texttt{store.runInTx()} blocks.
 \end{itemize}
 
 \subsection{Dataset generation}
@@ -606,8 +612,8 @@ To evaluate scalability under realistic database workloads while adhering to rig
 \subsubsection{Authentic Reference Datasets}
 Rather than generating purely synthetic game entities, the static reference data was populated using real-world datasets extracted from an online database library (\emph{Kaggle}):
 \begin{itemize}
-    \item \texttt{pokemons.csv}\cite{kaggle_pokemon}: Contains 800 Pokemon with complete attributes (\texttt{HP}, \texttt{Attack}, \texttt{Defense}, \texttt{Sp. Atk}, \texttt{Sp. Def}, \texttt{Speed}, \texttt{Generation}, \texttt{Legendary}).
-    \item \texttt{items.csv}\cite{kaggle_item}: Contains 920 game items with names and descriptions.
+  \item \texttt{pokemons.csv}\cite{kaggle_pokemon}: Contains 800 Pokemon with complete attributes (\texttt{HP}, \texttt{Attack}, \texttt{Defense}, \texttt{Sp. Atk}, \texttt{Sp. Def}, \texttt{Speed}, \texttt{Generation}, \texttt{Legendary}).
+  \item \texttt{items.csv}\cite{kaggle_item}: Contains 920 game items with names and descriptions.
 \end{itemize}
 
 \subsubsection{Deterministic Workload Generator}
@@ -615,10 +621,10 @@ To simulate scalable player bases ($1\text{K}$, $10\text{K}$, $100\text{K}$, and
 
 For each generated player profile:
 \begin{enumerate}
-    \item A unique identifier \texttt{Player\_i} is assigned as the player name (where $i \in \{1, \dots, N\}$ represents the $i$-th generated player), and \texttt{password\_hash} is populated using a deterministic hash derived from the player's name.
-    \item A random subset of $1$ to $10$ distinct Pokemon is assigned from the reference list without replacement.
-    \item $1$ to $10$ custom teams are constructed, each containing $1$ to $6$ member slots populated from the player's owned Pokemon.
-    \item An inventory is generated containing $1$ to $10$ distinct items with randomized quantities ranging from $1$ to $10$.
+  \item A unique identifier \texttt{Player\_i} is assigned as the player name (where $i \in \{1, \dots, N\}$ represents the $i$-th generated player), and \texttt{password\_hash} is populated using a deterministic hash derived from the player's name.
+  \item A random subset of $1$ to $10$ distinct Pokemon is assigned from the reference list without replacement.
+  \item $1$ to $10$ custom teams are constructed, each containing $1$ to $6$ member slots populated from the player's owned Pokemon.
+  \item An inventory is generated containing $1$ to $10$ distinct items with randomized quantities ranging from $1$ to $10$.
 \end{enumerate}
 
 \section{Experimentation and Benchmarking Protocol}
@@ -632,32 +638,32 @@ For each generated player profile:
 The raw timing results collected across all benchmarking suites are summarized in Table~\ref{tab:benchmark_results}. Metrics report average execution time in milliseconds over the five measured iterations ($N = 1\text{K}, 10\text{K}, 100\text{K}, 1\text{M}$).
 
 \begin{table}[htbp]
-	\centering
-	\small
-	\begin{tabular}{lrrrr}
-		\toprule
-		\textbf{DBMS / Operation} & \textbf{1 000 Players} & \textbf{10 000 Players} & \textbf{100 000 Players} & \textbf{1 000 000 Players} \\
-		\midrule
-		\multicolumn{5}{l}{\textbf{Insertion Average Time (ms)}} \\
-		\quad PostgreSQL & 505.23 & 5 833.41 & 61 100.10 & 674 640.10 \\
-		\quad ObjectDB   & 46.98 & 482.75 & 3 643.15 & N/A* \\
-		\quad ObjectBox  & 95.14 & 1 151.15 & 10 183.68 & N/A** \\
-		\midrule
-		\multicolumn{5}{l}{\textbf{GET Average Time (ms)}} \\
-		\quad PostgreSQL & 1.46 & 1.52 & 1.73 & 1.74 \\
-		\quad ObjectDB   & 0.60 & 0.29 & 0.84 & N/A* \\
-		\quad ObjectBox  & 0.21 & 0.12 & 0.21 & N/A** \\
-		\midrule
-		\multicolumn{5}{l}{\textbf{UPDATE Average Time (ms)}} \\
-		\quad PostgreSQL & 1.74 & 2.11 & 1.81 & 1.83 \\
-		\quad ObjectDB   & 0.33 & 0.23 & 0.31 & N/A* \\
-		\quad ObjectBox  & 0.27 & 0.29 & 0.41 & N/A** \\
-		\bottomrule
-	\end{tabular}
-	\\ * The free evaluation offer for ObjectDB imposes a strict limit of one million entities. \\	
-	** ObjectBox hits native memory-mapped storage limits when handling and resetting a graph of one million players (comprising tens of millions of nested entities).
-	\caption{Benchmark execution results (Average elapsed time in ms over Runs 2--6)}
-	\label{tab:benchmark_results}
+  \centering
+  \small
+  \begin{tabular}{lrrrr}
+    \toprule
+    \textbf{DBMS / Operation} & \textbf{1 000 Players} & \textbf{10 000 Players} & \textbf{100 000 Players} & \textbf{1 000 000 Players} \\
+    \midrule
+    \multicolumn{5}{l}{\textbf{Insertion Average Time (ms)}}                                                                             \\
+    \quad PostgreSQL          & 505.23                 & 5 833.41                & 61 100.10                & 674 640.10                 \\
+    \quad ObjectDB            & 46.98                  & 482.75                  & 3 643.15                 & N/A*                       \\
+    \quad ObjectBox           & 95.14                  & 1 151.15                & 10 183.68                & N/A**                      \\
+    \midrule
+    \multicolumn{5}{l}{\textbf{GET Average Time (ms)}}                                                                                   \\
+    \quad PostgreSQL          & 1.46                   & 1.52                    & 1.73                     & 1.74                       \\
+    \quad ObjectDB            & 0.60                   & 0.29                    & 0.84                     & N/A*                       \\
+    \quad ObjectBox           & 0.21                   & 0.12                    & 0.21                     & N/A**                      \\
+    \midrule
+    \multicolumn{5}{l}{\textbf{UPDATE Average Time (ms)}}                                                                                \\
+    \quad PostgreSQL          & 1.74                   & 2.11                    & 1.81                     & 1.83                       \\
+    \quad ObjectDB            & 0.33                   & 0.23                    & 0.31                     & N/A*                       \\
+    \quad ObjectBox           & 0.27                   & 0.29                    & 0.41                     & N/A**                      \\
+    \bottomrule
+  \end{tabular}
+  \\ * The free evaluation offer for ObjectDB imposes a strict limit of one million entities. \\
+  ** ObjectBox hits native memory-mapped storage limits when handling and resetting a graph of one million players (comprising tens of millions of nested entities).
+  \caption{Benchmark execution results (Average elapsed time in ms over Runs 2--6)}
+  \label{tab:benchmark_results}
 \end{table}
 
 Overall, both object-oriented systems outperform PostgreSQL by approximately an order of magnitude when it comes to the large-scale persistence of graphs, and by a factor of 2 to 10 for individual read and update operations under steady-state conditions, with up to 100 000 players.
@@ -668,22 +674,22 @@ Overall, both object-oriented systems outperform PostgreSQL by approximately an 
 Insertion latency highlights the fundamental architectural divergence between relational decomposition and object graph persistence:
 
 \begin{itemize}
-	\item \textbf{PostgreSQL:} Insertion time grows almost linearly from 505.23 ms at 1K to 674 640.10 ms at 1M ($1.33 \approx 1$ from $1\text{K}$ to 1M). Throughput peaks at $\approx 1\,980\text{ players/s}$ at $1\text{K}$ (and $\approx 1\,714\text{ players/s}$ at $10\text{K}$) and declines to $\approx 1\,482\text{ players/s}$ at $1\text{M}$. Even with JDBC batch rewriting enabled (\texttt{reWrite\-BatchedInserts=true}), persisting a single \texttt{Player} object graph requires flattening nested collections into normalized rows across four tables (\texttt{players}, \texttt{teams}, \texttt{team\_members}, and \texttt{item\_player}), validating foreign key constraints, to write records to the transaction log via a TCP socket, etc.
-	
-	\item \textbf{ObjectDB:} ObjectDB achieves the highest ingestion throughput across all completed scales, running $10.75\times$ faster than PostgreSQL at $1\text{K}$ ($46.98\text{ ms}$), $12.08\times$ faster at $10\text{K}$ ($482.75\text{ ms}$, scaling linearly by $10.28\times$), and $16.77\times$ faster at $100\text{K}$ ($3\,643.15\text{ ms}$, roughly $27\,450\text{ players/s}$). Because \texttt{Pokemon} and \texttt{Item} are stored as \texttt{@Embeddable} value objects and \texttt{Team} relationships use \texttt{CascadeType.ALL}, ObjectDB traverses the reachability graph in memory and writes contiguous object pages directly into a single \texttt{.odb} file without join-table fan-out.
-	
-	\item \textbf{ObjectBox:} ObjectBox completes insertions $5.07\times$ to $6.00\times$ faster than PostgreSQL ($95.14\text{ ms}$ at $1\text{K}$, $1\,151.15\text{ ms}$ at $10\text{K}$, and $10\,183.68\text{ ms}$ at $100\text{K}$), but remains $2.03\times$ to $2.80\times$ slower than ObjectDB. Two factors explain this gap. First, ObjectBox lacks native embedded maps, requiring player inventories to be decomposed into explicit \texttt{InventoryEntry} entities linked via \texttt{ToOne} and \texttt{ToMany} relations inside \texttt{store.runInTx()}. Second, the raw traces reveal consistent post-warmup latency on Run~2 ($225.52\text{ ms}$ at $1\text{K}$, $2\,869.86\text{ ms}$ at $10\text{K}$, and $24\,028.50\text{ ms}$ at $100\text{K}$) caused by memory-mapped store expansion; once stabilized in Runs~3--6, ObjectBox averages $62.54\text{ ms}$, $721.47\text{ ms}$, and $6\,722.48\text{ ms}$, respectively.
+  \item \textbf{PostgreSQL:} Insertion time grows almost linearly from 505.23 ms at 1K to 674 640.10 ms at 1M ($1.33 \approx 1$ from $1\text{K}$ to 1M). Throughput peaks at $\approx 1\,980\text{ players/s}$ at $1\text{K}$ (and $\approx 1\,714\text{ players/s}$ at $10\text{K}$) and declines to $\approx 1\,482\text{ players/s}$ at $1\text{M}$. Even with JDBC batch rewriting enabled (\texttt{reWrite\-BatchedInserts=true}), persisting a single \texttt{Player} object graph requires flattening nested collections into normalized rows across four tables (\texttt{players}, \texttt{teams}, \texttt{team\_members}, and \texttt{item\_player}), validating foreign key constraints, to write records to the transaction log via a TCP socket, etc.
+
+  \item \textbf{ObjectDB:} ObjectDB achieves the highest ingestion throughput across all completed scales, running $10.75\times$ faster than PostgreSQL at $1\text{K}$ ($46.98\text{ ms}$), $12.08\times$ faster at $10\text{K}$ ($482.75\text{ ms}$, scaling linearly by $10.28\times$), and $16.77\times$ faster at $100\text{K}$ ($3\,643.15\text{ ms}$, roughly $27\,450\text{ players/s}$). Because \texttt{Pokemon} and \texttt{Item} are stored as \texttt{@Embeddable} value objects and \texttt{Team} relationships use \texttt{CascadeType.ALL}, ObjectDB traverses the reachability graph in memory and writes contiguous object pages directly into a single \texttt{.odb} file without join-table fan-out.
+
+  \item \textbf{ObjectBox:} ObjectBox completes insertions $5.07\times$ to $6.00\times$ faster than PostgreSQL ($95.14\text{ ms}$ at $1\text{K}$, $1\,151.15\text{ ms}$ at $10\text{K}$, and $10\,183.68\text{ ms}$ at $100\text{K}$), but remains $2.03\times$ to $2.80\times$ slower than ObjectDB. Two factors explain this gap. First, ObjectBox lacks native embedded maps, requiring player inventories to be decomposed into explicit \texttt{InventoryEntry} entities linked via \texttt{ToOne} and \texttt{ToMany} relations inside \texttt{store.runInTx()}. Second, the raw traces reveal consistent post-warmup latency on Run~2 ($225.52\text{ ms}$ at $1\text{K}$, $2\,869.86\text{ ms}$ at $10\text{K}$, and $24\,028.50\text{ ms}$ at $100\text{K}$) caused by memory-mapped store expansion; once stabilized in Runs~3--6, ObjectBox averages $62.54\text{ ms}$, $721.47\text{ ms}$, and $6\,722.48\text{ ms}$, respectively.
 \end{itemize}
 
 \subsubsection{Point retrieval (GET) and graph traversal latency}
 Point retrieval measures the cost of locating a single \texttt{Player} by identifier and reconstructing its complete object graph (owned teams, team rosters, and inventory items):
 
 \begin{itemize}
-	\item \textbf{PostgreSQL:} Retrieval latency exhibits logarithmic-to-constant scaling across three orders of magnitude, rising by only $19.2\%$ ($1.19\times$) from $1.46\text{ ms}$ at $1\text{K}$ to $1.74\text{ ms}$ at $1\text{M}$. Whileforeign key indexes keep lookup times tightly bounded even at one million players, absolute latency remains higher than in both OODBMSs. Reconstructing a single player profile requires traversing normalized junction tables (\texttt{teams}, \texttt{team\_members}, \texttt{item\_player}), incurring TCP/IP round-trip communication overhead.
-	
-	\item \textbf{ObjectDB:} ObjectDB retrieves full player graphs $2.06\times$ to $5.24\times$ faster than PostgreSQL, recording $0.60\text{ ms}$ at $1\text{K}$, $0.29\text{ ms}$ at $10\text{K}$, and $0.84\text{ ms}$ at $100\text{K}$. Embedded execution eliminates network serialization, while direct object references allow the \texttt{EntityManager} to materialize owned \texttt{Team} entities and embedded \texttt{Pokemon} and \texttt{Item} collections without relational joins. The initial drop from $0.60\text{ ms}$ to $0.29\text{ ms}$ reflects JVM Just-In-Time (JIT) compilation and page-cache warming, whereas the increase to $0.84\text{ ms}$ at $100\text{K}$ (where total stored \texttt{Player} and \texttt{Team} entities approach the one-million mark) stems from larger index traversals, page-cache misses, and Java heap allocation overhead.
-	
-	\item \textbf{ObjectBox:} ObjectBox delivers the lowest retrieval latency at every tested scale, averaging $0.21\text{ ms}$ at $1\text{K}$, $0.12\text{ ms}$ at $10\text{K}$, and $0.21\text{ ms}$ at $100\text{K}$. This makes it $6.95\times$ to $12.67\times$ faster than PostgreSQL and $2.42\times$ to $4.00\times$ faster than ObjectDB. Crucially, its latency shows virtually zero degradation between $1\text{K}$ and $100\text{K}$ players. Because ObjectBox stores entities as FlatBuffers inside memory-mapped files (\texttt{mmap}) and executes queries in a native C++ core, reading a \texttt{Player} and traversing its \texttt{ToOne}/\texttt{ToMany} links avoids both network IPC and heavy intermediate object parsing.
+  \item \textbf{PostgreSQL:} Retrieval latency exhibits logarithmic-to-constant scaling across three orders of magnitude, rising by only $19.2\%$ ($1.19\times$) from $1.46\text{ ms}$ at $1\text{K}$ to $1.74\text{ ms}$ at $1\text{M}$. Whileforeign key indexes keep lookup times tightly bounded even at one million players, absolute latency remains higher than in both OODBMSs. Reconstructing a single player profile requires traversing normalized junction tables (\texttt{teams}, \texttt{team\_members}, \texttt{item\_player}), incurring TCP/IP round-trip communication overhead.
+
+  \item \textbf{ObjectDB:} ObjectDB retrieves full player graphs $2.06\times$ to $5.24\times$ faster than PostgreSQL, recording $0.60\text{ ms}$ at $1\text{K}$, $0.29\text{ ms}$ at $10\text{K}$, and $0.84\text{ ms}$ at $100\text{K}$. Embedded execution eliminates network serialization, while direct object references allow the \texttt{EntityManager} to materialize owned \texttt{Team} entities and embedded \texttt{Pokemon} and \texttt{Item} collections without relational joins. The initial drop from $0.60\text{ ms}$ to $0.29\text{ ms}$ reflects JVM Just-In-Time (JIT) compilation and page-cache warming, whereas the increase to $0.84\text{ ms}$ at $100\text{K}$ (where total stored \texttt{Player} and \texttt{Team} entities approach the one-million mark) stems from larger index traversals, page-cache misses, and Java heap allocation overhead.
+
+  \item \textbf{ObjectBox:} ObjectBox delivers the lowest retrieval latency at every tested scale, averaging $0.21\text{ ms}$ at $1\text{K}$, $0.12\text{ ms}$ at $10\text{K}$, and $0.21\text{ ms}$ at $100\text{K}$. This makes it $6.95\times$ to $12.67\times$ faster than PostgreSQL and $2.42\times$ to $4.00\times$ faster than ObjectDB. Crucially, its latency shows virtually zero degradation between $1\text{K}$ and $100\text{K}$ players. Because ObjectBox stores entities as FlatBuffers inside memory-mapped files (\texttt{mmap}) and executes queries in a native C++ core, reading a \texttt{Player} and traversing its \texttt{ToOne}/\texttt{ToMany} links avoids both network IPC and heavy intermediate object parsing.
 \end{itemize}
 
 
@@ -691,33 +697,104 @@ Point retrieval measures the cost of locating a single \texttt{Player} by identi
 Transactional updates evaluate the overhead of mutating an existing persistent player state and committing the change to durable storage:
 
 \begin{itemize}
-	\item \textbf{PostgreSQL:} Update latency stays nearly flat across all dataset sizes, fluctuating within a narrow band between $1.74\text{ ms}$  for $1\text{K}$ and $2.11\text{ ms}$ for $10\text{K}$, and stabilizing at $1.81\text{ ms}$ for $100\text{K}$ and $1.83\text{ ms}$ for $1\text{M}$. Execution time is primarily determined by fixed costs per transaction: network round-trips between the client and the server, execution of SQL statements, etc.
-	
-	\item \textbf{ObjectDB:} ObjectDB sustains an almost constant update latency of $0.33\text{ ms}$ at $1\text{K}$, $0.23\text{ ms}$ at $10\text{K}$, and $0.31\text{ ms}$ at $100\text{K}$, outperforming PostgreSQL by $5.27\times$ to $9.17\times$. Through JPA transparent persistence and automatic dirty tracking within the active \texttt{EntityManager}, mutations applied to a managed \texttt{Player} instance are detected in memory and flushed directly to the corresponding object pages in the \texttt{.odb} file upon transaction commit, bypassing query translation.
-	
-	\item \textbf{ObjectBox:} ObjectBox achieves comparable update performance, recording $0.27\text{ ms}$ at $1\text{K}$, $0.29\text{ ms}$ at $10\text{K}$, and $0.41\text{ ms}$ at $100\text{K}$ ($4.41\times$ to $7.28\times$ faster than PostgreSQL). Unlike its flat read profile, ObjectBox's latency increase by $+51.9\%$ between $1\text{K}$ and $100\text{K}$ ($0.27\text{ ms}$ to $0.41\text{ ms}$), becoming slightly slower ($1.26\times$ to $1.32\times$) than ObjectDB at $10\text{K}$ and $100\text{K}$. Updating a player graph in ObjectBox requires re-serializing modified FlatBuffer records and synchronizing intermediate relation entities (such as \texttt{InventoryEntry} and \texttt{Team} links) inside \texttt{store.runInTx()}.
+  \item \textbf{PostgreSQL:} Update latency stays nearly flat across all dataset sizes, fluctuating within a narrow band between $1.74\text{ ms}$  for $1\text{K}$ and $2.11\text{ ms}$ for $10\text{K}$, and stabilizing at $1.81\text{ ms}$ for $100\text{K}$ and $1.83\text{ ms}$ for $1\text{M}$. Execution time is primarily determined by fixed costs per transaction: network round-trips between the client and the server, execution of SQL statements, etc.
+
+  \item \textbf{ObjectDB:} ObjectDB sustains an almost constant update latency of $0.33\text{ ms}$ at $1\text{K}$, $0.23\text{ ms}$ at $10\text{K}$, and $0.31\text{ ms}$ at $100\text{K}$, outperforming PostgreSQL by $5.27\times$ to $9.17\times$. Through JPA transparent persistence and automatic dirty tracking within the active \texttt{EntityManager}, mutations applied to a managed \texttt{Player} instance are detected in memory and flushed directly to the corresponding object pages in the \texttt{.odb} file upon transaction commit, bypassing query translation.
+
+  \item \textbf{ObjectBox:} ObjectBox achieves comparable update performance, recording $0.27\text{ ms}$ at $1\text{K}$, $0.29\text{ ms}$ at $10\text{K}$, and $0.41\text{ ms}$ at $100\text{K}$ ($4.41\times$ to $7.28\times$ faster than PostgreSQL). Unlike its flat read profile, ObjectBox's latency increase by $+51.9\%$ between $1\text{K}$ and $100\text{K}$ ($0.27\text{ ms}$ to $0.41\text{ ms}$), becoming slightly slower ($1.26\times$ to $1.32\times$) than ObjectDB at $10\text{K}$ and $100\text{K}$. Updating a player graph in ObjectBox requires re-serializing modified FlatBuffer records and synchronizing intermediate relation entities (such as \texttt{InventoryEntry} and \texttt{Team} links) inside \texttt{store.runInTx()}.
 \end{itemize}
 
 \subsection{Critical analysis by DBMS}
 
 \subsubsection{PostgreSQL}
-PostgreSQL illustrates the classic trade-offs inherent in relational database management systems based on a client-server architecture. Its primary limitation in this domain is the \emph{object-relational impedance mismatch}: decomposing hierarchical player profiles across four normalized tables increases processing time ($61.10\text{ s}$ vs.\ $3.64\text{ s}$ on ObjectDB at $100\text{K}$), even with JDBC batching optimizations enabled. Similarly, point reads and updates incur a baseline latency floor of $\approx 1.5$--$2.1\text{ ms}$ due to relational join reconstruction and client-server TCP/IP round-trips.
+PostgreSQL illustrates the classic trade-offs inherent in relational database management systems based on a client-server architecture. Its primary limitation in this domain is the \emph{object-relational impedance mismatch}: decomposing hierarchical player profiles across four normalized tables increases processing time ($61.10\text{ s}$ vs.\ $3.64\text{ s}$ on ObjectDB at $100\text{K}$), even with JDBC batching optimizations enabled. Similarly, point reads and updates incur a baseline latency floor of $\approx 1.5$ to $2.1\text{ ms}$ due to relational join reconstruction and client-server TCP/IP round-trips.
 
 However, PostgreSQL is the \emph{only} evaluated system capable of completing the full $1\,000\,000$-player benchmark without failure or restriction. PostgreSQL proves to be the most resilient choice when dataset volume exceeds single-node embedded limits or requires shared multi-process access.
 
 \subsubsection{ObjectDB}
-ObjectDB aligns closest with the conceptual domain model and eliminates the impedance mismatch almost entirely. Using standard JPA annotations (\texttt{@Entity}, \texttt{@Embeddable}, \texttt{@ElementCollection}, and \texttt{Cascade\-Type.ALL}), complex collections such as player inventories (\texttt{Map<Item, Integer>}) and team rosters are persisted natively via reachability. This direct mapping between objects and pages enables the highest insertion rates in the benchmark for bulk data insertion. (up to $16.77\times$ faster than PostgreSQL at $100\text{K}$) as well as rapid, constant-time transactional updates ($0.23$--$0.33\text{ ms}$). Furthermore, using JPA preserves portability to relational storage systems should architectural requirements evolve.
+ObjectDB aligns closest with the conceptual domain model and eliminates the impedance mismatch almost entirely. Using standard JPA annotations (\texttt{@Entity}, \texttt{@Embeddable}, \texttt{@ElementCollection}, and \texttt{Cascade\-Type.ALL}), complex collections such as player inventories (\texttt{Map<Item, Integer>}) and team rosters are persisted natively via reachability. This direct mapping between objects and pages enables the highest insertion rates in the benchmark for bulk data insertion. (up to $16.77\times$ faster than PostgreSQL at $100\text{K}$) as well as rapid, constant-time transactional updates ($0.23$ to $0.33\text{ ms}$). Furthermore, using JPA preserves portability to relational storage systems should architectural requirements evolve.
 
 However, ObjectDB has a notable drawback. Its commercial licensing model limits the free edition to 1 million persistent entity instances and 10 persistable classes. Given that each \texttt{Player} entity can have up to 10 distinct \texttt{Team} entities, scaling to support 1 million players results in approximately 6.5 million entity objects hitting the strict limit imposed by the license.
 
 \subsubsection{ObjectBox}
-ObjectBox is built for ultra-low-latency embedded persistence, and the empirical results confirm its strength on read-heavy workloads. Powered by a native C++ storage engine, memory-mapped file I/O, and zero-copy FlatBuffers serialization, it achieves sub-millisecond point retrievals ($0.12$--$0.21\text{ ms}$) that remain invariant from $1\text{K}$ to $100\text{K}$ players, outperforming PostgreSQL by up to $12.67\times$ and ObjectDB by up to $4.00\times$.
+ObjectBox is built for ultra-low-latency embedded persistence, and the empirical results confirm its strength on read-heavy workloads. Powered by a native C++ storage engine, memory-mapped file I/O, and zero-copy FlatBuffers serialization, it achieves sub-millisecond point retrievals ($0.12$ to $0.21\text{ ms}$) that remain invariant from $1\text{K}$ to $100\text{K}$ players, outperforming PostgreSQL by up to $12.67\times$ and ObjectDB by up to $4.00\times$.
 
 Its limitations stem from its data model expressiveness, proprietary API, and memory-mapped architecture at extreme scale. Because ObjectBox does not natively support embedded key-value maps, inventories must be manually normalized into auxiliary \texttt{InventoryEntry} entities, linked via \texttt{ToOne} and \texttt{ToMany}relationships, that makes bulk inserts $2.03\times$ to $2.80\times$ slower than ObjectDB. In addition, the system exhibits visible latency spikes when expanding its memory-mapped store (Run~2) and reaches native memory-mapped storage and reset limits at the $1\text{M}$-player scale, where tens of millions of interconnected entities must be managed within a single embedded store.
 
 \section{Overall Assessment: Pros and Cons}
+Performance test results from our benchmarks demonstrate that, \textbf{for our RPG application domain, object-oriented database management systems are clearly the preferred technology over traditional relational systems like PostgreSQL.} Since player profiles consist of deeply nested object graphs, such as collections of teams, ordered rosters, and item inventories that are accessed and modified as coherent units, eliminating the impedance mismatch between object-oriented and relational systems yields significant gains in data persistence, with individual operations executing in under a millisecond. Nevertheless, PostgreSQL, ObjectDB, and ObjectBox each entail distinct operational trade-offs regarding licensing, memory footprint, and    that must be carefully considered for production deployment.
+
 \subsection{Comparison table}
+
+Table~\ref{tab:overall_comparison} contrasts the three evaluated systems across their core architectural, modeling, and empirical performance dimensions.
+
+\begin{table}[H]
+  \centering
+  \small
+  \begin{tabularx}{\textwidth}{>{\RaggedRight\bfseries}p{3.1cm} L L L}
+    \toprule
+    \textbf{Criterion}                      & \textbf{PostgreSQL (RDBMS)}                                                    & \textbf{ObjectDB (OODBMS)}                                                       & \textbf{ObjectBox (Embedded OODBMS)}                                              \\
+    \midrule
+    \textbf{Architecture}                   & Client-server (separate process via TCP/IP)                                    & Embedded in-JVM                                                                  & Strictly embedded native C++ core                                                 \\
+    \addlinespace[4pt]
+    \textbf{Data Model \& Impedance}        & Normalized 3NF tables, high impedance mismatch                                 & Native Java object graph (\texttt{@Entity}, \texttt{@Embeddable}), zero mismatch & Entity graph with \texttt{ToOne}/\texttt{ToMany}, minor mismatch (no native maps) \\
+    \addlinespace[4pt]
+    \textbf{API \& Standard Compliance}     & Standard SQL / JDBC                                                            & Standard JPA / JPQL                                                              & Proprietary generated API and typed query builder                                 \\
+    \addlinespace[4pt]
+    \textbf{Bulk Insertion Rate}            & Baseline ($61.10\text{ s}$ at $100\text{K}$, $674.64\text{ s}$ at $1\text{M}$) & \textbf{Fastest} ($10.75\times$ to $16.77\times$ faster than PostgreSQL)         & Fast ($5.07\times$ to $6.00\times$ faster than PostgreSQL, slower than ObjectDB)  \\
+    \addlinespace[4pt]
+    \textbf{Point Read (GET) Latency}       & Moderate ($1.46$ to $1.74\text{ ms}$, join \& IPC overhead)                    & Low ($0.29$ to $0.84\text{ ms}$)                                                 & \textbf{Lowest} ($0.12$ to $0.21\text{ ms}$)                                      \\
+    \addlinespace[4pt]
+    \textbf{Update Latency}                 & Moderate ($1.74$ to $2.11\text{ ms}$, network \& WAL sync)                     & \textbf{Lowest at scale} ($0.23$ to $0.33\text{ ms}$)                            & Very low ($0.27$ to $0.41\text{ ms}$)                                             \\
+    \addlinespace[4pt]
+    \textbf{Scalability Limit (1M Players)} & \textbf{Completed} without restriction                                         & Blocked by free license ($1\text{M}$ entity cap)                                 & Hit native \texttt{mmap} storage/reset limits                                     \\
+    \addlinespace[4pt]
+    \textbf{Concurrency \& Multi-Process}   & Multi-process, multi-user MVCC                                                 & Single-process file lock in embedded mode                                        & Single-process only (single writer, multiple readers)                             \\
+    \addlinespace[4pt]
+    \textbf{Schema Evolution}               & Explicit SQL DDL migrations                                                    & Automatic by field name, manual config for renames                               & Automatic add/remove, JSON model IDs for renames                                  \\
+    \addlinespace[4pt]
+    \textbf{Licensing}                      & Open-source (PostgreSQL License)                                               & Commercial (restrictive free evaluation tier)                                    & Open-source Java binding (Apache 2.0)                                             \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Overall architectural and empirical comparison of PostgreSQL, ObjectDB, and ObjectBox.}
+  \label{tab:overall_comparison}
+\end{table}
+
+\paragraph{Summary of Pros and Cons by System:}
+\begin{itemize}
+  \item \textbf{PostgreSQL:}
+        \begin{itemize}
+          \item \emph{Pros:} Proven scalability up to and beyond $1\,000\,000$ player profiles; standardized SQL ecosystem and mature migration/monitoring tools; open-source with no artificial entity caps.
+          \item \emph{Cons:} Severe object-relational impedance mismatch requiring 3NF decomposition across four tables; an order-of-magnitude slower bulk ingestion ($61.10\text{ s}$ vs.\ $3.64\text{ s}$ at $100\text{K}$); persistent $\approx 1.5$ to $2.1\text{ ms}$ latency floor on single-profile reads and updates due to relational joins and TCP/IP round-trips.
+        \end{itemize}
+
+  \item \textbf{ObjectDB:}
+        \begin{itemize}
+          \item \emph{Pros:} Eliminates impedance mismatch via standard JPA annotations, native \texttt{@ElementCollection} maps, and persistence by reachability; highest bulk ingestion throughput ($27\,450\text{ players/s}$ at $100\text{K}$) and lowest update latency at scale ($0.23$ to $0.31\text{ ms}$); smooth portability path to relational databases via JPA/JPQL.
+          \item \emph{Cons:} Commercial license restricts the free edition to $1\,000\,000$ persistent entity instances and $10$ classes (preventing the $1\text{M}$-player benchmark); JVM-only ecosystem.
+        \end{itemize}
+
+  \item \textbf{ObjectBox:}
+        \begin{itemize}
+          \item \emph{Pros:} Sub-millisecond point retrieval latency ($0.12$ to $0.21\text{ ms}$) that remains invariant up to $100\text{K}$ players thanks to memory-mapped I/O and FlatBuffers; cross-language native engine ideal for resource-constrained devices; compile-time type safety via generated query builders.
+          \item \emph{Cons:} Proprietary, non-standard API causing vendor lock-in; lacks native key-value map storage (requiring auxiliary \texttt{InventoryEntry} entities); hits native storage/reset constraints at the $1\text{M}$-player scale.
+        \end{itemize}
+\end{itemize}
+
 \subsection{Usage recommendations}
+
+Based on our experimental results, object-oriented databases outperform PostgreSQL across all fundamental operational requirements specific to our domain: role-playing games (RPG). The choice between the systems evaluated depends primarily on the scale of deployment and operational constraints:
+
+\begin{enumerate}
+  \item \textbf{ObjectDB - The best choice for the core Java RPG application:}
+        For a stateful Java game server managing complex, write-intensive player profiles, ObjectDB is the best solution. It maps the conceptual domain model directly without normalization overhead (supporting native \texttt{Map<Item, Integer>} inventories and reachability persistence), achieves the highest bulk ingestion rate ($16.77\times$ faster than PostgreSQL at $100\text{K}$ players), and delivers constant sub-millisecond transactional updates ($0.23$ to $0.33\text{ ms}$). Furthermore, its reliance on standard JPA preserves portability to relational engines if architectural requirements ever change. The only major drawback is that deploying it beyond one million entities requires acquiring a commercial license to lift the evaluation tier cap.
+
+  \item \textbf{ObjectBox - The best choice for read-heavy client or mobile deployments:}
+        When the application targets resource-constrained client devices, mobile platforms, or offline-first local caches where ultra-fast profile loading is paramount, ObjectBox is the strongest candidate. Thanks to its native C++ engine, memory-mapped I/O, and zero-copy FlatBuffers serialization, it achieves the lowest point retrieval latency ($0.12$ to $0.21\text{ ms}$, up to $12.67\times$ faster than PostgreSQL) with virtually zero degradation up to $100\text{K}$ players, at the cost of a proprietary API and manual map decomposition.
+
+  \item \textbf{PostgreSQL - Reserved for multi-process analytical workloads or zero-license-cost scale:}
+        Although PostgreSQL suffers from severe impedance mismatch and a persistent $\approx 1.5$ to $2.1\text{ ms}$ latency floor due to relational joins and TCP/IP round-trips, it was the only system able to complete the 1M players benchmark under default open-source constraints. Consequently, PostgreSQL should only be preferred over an OODBMS for this application if budget constraints prohibit an ObjectDB commercial license at multi-million-entity scale, or if multiple independent services require concurrent SQL-based analytical querying across the player base.
+\end{enumerate}
 
 \section{Conclusion}
 
@@ -725,38 +802,38 @@ Its limitations stem from its data model expressiveness, proprietary API, and me
 
 \begin{thebibliography}{99}
 
-\bibitem{kaggle_pokemon}
-M.~Lomuscio, ``Pokemon Dataset,'' \emph{Kaggle}, 2017. [Online]. Available: \url{https://www.kaggle.com/datasets/mlomuscio/pokemon}. [Accessed: Oct. 17, 2026].
+  \bibitem{kaggle_pokemon}
+  M.~Lomuscio, ``Pokemon Dataset,'' \emph{Kaggle}, 2017. [Online]. Available: \url{https://www.kaggle.com/datasets/mlomuscio/pokemon}. [Accessed: Oct. 17, 2026].
 
-\bibitem{kaggle_item}
-M.~O'Neill, ``Pokemon Sun and Moon (Gen 7) Stats,'' \emph{Kaggle}, 2016. [Online]. Available: \url{https://www.kaggle.com/datasets/mylesoneill/pokemon-sun-and-moon-gen-7-stats}. [Accessed: Oct. 17, 2026].
+  \bibitem{kaggle_item}
+  M.~O'Neill, ``Pokemon Sun and Moon (Gen 7) Stats,'' \emph{Kaggle}, 2016. [Online]. Available: \url{https://www.kaggle.com/datasets/mylesoneill/pokemon-sun-and-moon-gen-7-stats}. [Accessed: Oct. 17, 2026].
 
-\bibitem{manifesto}
-M.~Atkinson, F.~Bancilhon, D.~DeWitt, K.~Dittrich, D.~Maier, and S.~Zdonik, ``The Object-Oriented Database System Manifesto,'' in \emph{Proc. 1st Int. Conf. on Deductive and Object-Oriented Databases (DOOD)}, Kyoto, Japan, 1989, pp.~223--240. [Online]. Available: \url{https://cs.brown.edu/courses/cs295-11/2006/oo-manifesto.pdf}. [Accessed: Oct. 26, 2026].
+  \bibitem{manifesto}
+  M.~Atkinson, F.~Bancilhon, D.~DeWitt, K.~Dittrich, D.~Maier, and S.~Zdonik, ``The Object-Oriented Database System Manifesto,'' in \emph{Proc. 1st Int. Conf. on Deductive and Object-Oriented Databases (DOOD)}, Kyoto, Japan, 1989, pp.~223--240. [Online]. Available: \url{https://cs.brown.edu/courses/cs295-11/2006/oo-manifesto.pdf}. [Accessed: Oct. 26, 2026].
 
-\bibitem{odmg}
-R.~G.~G.~Cattell and D.~K.~Barry, Eds., \emph{The Object Data Standard: ODMG 3.0}. San Francisco, CA, USA: Morgan Kaufmann, 2000. [Online]. Available: \url{https://cs.ulb.ac.be/public/_media/teaching/odmg.pdf}. [Accessed: Oct. 26, 2026].
+  \bibitem{odmg}
+  R.~G.~G.~Cattell and D.~K.~Barry, Eds., \emph{The Object Data Standard: ODMG 3.0}. San Francisco, CA, USA: Morgan Kaufmann, 2000. [Online]. Available: \url{https://cs.ulb.ac.be/public/_media/teaching/odmg.pdf}. [Accessed: Oct. 26, 2026].
 
-\bibitem{objectdb_manual}
-``ObjectDB 2.9 Developer's Guide,'' \emph{ObjectDB Software}. [Online]. Available: \url{https://www.objectdb.com/java/jpa}. [Accessed: Oct. 30, 2026].
+  \bibitem{objectdb_manual}
+  ``ObjectDB 2.9 Developer's Guide,'' \emph{ObjectDB Software}. [Online]. Available: \url{https://www.objectdb.com/java/jpa}. [Accessed: Oct. 30, 2026].
 
-\bibitem{objectdb_license}
-``ObjectDB License,'' \emph{ObjectDB Software}. [Online]. Available: \url{https://www.objectdb.com/database/purchase}. [Accessed: Oct. 30, 2026].
+  \bibitem{objectdb_license}
+  ``ObjectDB License,'' \emph{ObjectDB Software}. [Online]. Available: \url{https://www.objectdb.com/database/purchase}. [Accessed: Oct. 30, 2026].
 
-\bibitem{objectbox_docs}
-``ObjectBox Java Documentation,'' \emph{ObjectBox}. [Online]. Available: \url{https://docs.objectbox.io/}. [Accessed: Nov. 13, 2026].
+  \bibitem{objectbox_docs}
+  ``ObjectBox Java Documentation,'' \emph{ObjectBox}. [Online]. Available: \url{https://docs.objectbox.io/}. [Accessed: Nov. 13, 2026].
 
-\bibitem{objectbox_javadoc}
-``Class BoxStoreBuilder,'' \emph{ObjectBox Java API Reference}. [Online]. Available: \url{https://objectbox.io/docfiles/java/current/io/objectbox/BoxStoreBuilder.html}. [Accessed: Nov. 13, 2026].
+  \bibitem{objectbox_javadoc}
+  ``Class BoxStoreBuilder,'' \emph{ObjectBox Java API Reference}. [Online]. Available: \url{https://objectbox.io/docfiles/java/current/io/objectbox/BoxStoreBuilder.html}. [Accessed: Nov. 13, 2026].
 
-\bibitem{objectbox_github}
-``objectbox-java,'' \emph{GitHub}. [Online]. Available: \url{https://github.com/objectbox/objectbox-java}. [Accessed: Nov. 13, 2026].
+  \bibitem{objectbox_github}
+  ``objectbox-java,'' \emph{GitHub}. [Online]. Available: \url{https://github.com/objectbox/objectbox-java}. [Accessed: Nov. 13, 2026].
 
-\bibitem{dbdb_objectbox}
-``ObjectBox,'' \emph{Database of Databases}, Carnegie Mellon University. [Online]. Available: \url{https://dbdb.io/db/objectbox}. [Accessed: Nov. 13, 2026].
+  \bibitem{dbdb_objectbox}
+  ``ObjectBox,'' \emph{Database of Databases}, Carnegie Mellon University. [Online]. Available: \url{https://dbdb.io/db/objectbox}. [Accessed: Nov. 13, 2026].
 
-\bibitem{postgres_doc}
-``PostgreSQL Documentation,'' \emph{The PostgreSQL Global Development Group}. [Online]. Available: \url{https://www.postgresql.org/docs/current/}. [Accessed: Nov. 13, 2026].
+  \bibitem{postgres_doc}
+  ``PostgreSQL Documentation,'' \emph{The PostgreSQL Global Development Group}. [Online]. Available: \url{https://www.postgresql.org/docs/current/}. [Accessed: Nov. 13, 2026].
 
 \end{thebibliography}
 
