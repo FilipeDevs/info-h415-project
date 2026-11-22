@@ -4,6 +4,7 @@ import io.objectbox.Box;
 import io.objectbox.BoxStore;
 import io.objectbox.BoxStoreBuilder;
 import io.objectbox.query.Query;
+import io.objectbox.query.QueryBuilder;
 import io.objectbox.query.QueryBuilder.StringOrder;
 import ulb.exception.DaoException;
 import ulb.object_box_model.InventoryEntry;
@@ -12,7 +13,9 @@ import ulb.object_box_model.MyObjectBox;
 import ulb.object_box_model.Player;
 import ulb.object_box_model.Player_;
 import ulb.object_box_model.Pokemon;
+import ulb.object_box_model.Pokemon_;
 import ulb.object_box_model.Team;
+import ulb.object_box_model.Team_;
 
 import java.io.File;
 import java.io.IOException;
@@ -179,6 +182,38 @@ public class ObjectBoxDao implements BenchmarkDao {
                             "Inventory item not found for player: " + playername + ", " + itemName));
             matchingEntry.setAmount(amount);
             store.runInTx(() -> store.boxFor(InventoryEntry.class).put(matchingEntry));
+        } finally {
+            query.close();
+        }
+    }
+
+    @Override
+    public int searchLegendaryOwners(String requester) {
+        store.closeThreadResources();
+
+        QueryBuilder<Player> qb = otherPlayers(requester);
+        qb.link(Player_.teams).link(Team_.members).equal(Pokemon_.legendary, true);
+        return countNames(qb.build());
+    }
+
+    @Override
+    public int searchActiveLegendaryOfType(String requester, String type) {
+        store.closeThreadResources();
+
+        QueryBuilder<Player> qb = otherPlayers(requester);
+        qb.link(Player_.currentTeam).link(Team_.members)
+                .equal(Pokemon_.legendary, true)
+                .equal(Pokemon_.type1, type, StringOrder.CASE_SENSITIVE);
+        return countNames(qb.build());
+    }
+
+    private QueryBuilder<Player> otherPlayers(String requester) {
+        return playerBox.query().notEqual(Player_.playername, requester, StringOrder.CASE_SENSITIVE);
+    }
+
+    private int countNames(Query<Player> query) {
+        try {
+            return query.property(Player_.playername).findStrings().length;
         } finally {
             query.close();
         }
