@@ -797,6 +797,11 @@ Based on our experimental results, object-oriented databases outperform PostgreS
 \end{enumerate}
 
 \section{Conclusion}
+In this project, we investigated the theoretical foundations, architectural trade-offs, and empirical performance of Object-Oriented Database Management Systems (OODBMS) through a comparative evaluation of \textbf{ObjectDB} and \textbf{ObjectBox} against a traditional relational baseline, \textbf{PostgreSQL}. By modeling a role-playing game (RPG) domain characterized by deeply nested player profiles combining team hierarchies, ordered rosters, and item inventories, we evaluated how directly persisting object graphs compares to decomposing them into normalized Third Normal Form (3NF) relational tables.
+
+Our experimental results across datasets ranging from $1\,000$ to $1\,000\,000$ players confirm that eliminating the \emph{object-relational impedance mismatch} yields substantial performance gains for graph-centric workloads.
+
+Finally, \textbf{object-oriented databases prove to be the technology of choice for our RPG application domain}. For a stateful Java backend managing complex, write-intensive player graphs, \textbf{ObjectDB} offers the optimal combination of ingestion speed, transparent dirty tracking, and JPA standard portability, though it does require a commercial license to exceed the one-million-entity threshold. Conversely, for read-heavy client-side, mobile, or offline-first deployments where sub-millisecond profile loading is paramount, \textbf{ObjectBox} stands out as the ideal storage engine. Future work could explore evaluating ObjectDB under an enterprise license and in client-server mode at multi-million-entity scale.
 
 \section{Bibliography and Appendices}
 
