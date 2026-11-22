@@ -131,6 +131,33 @@ public class ObjectDbDao implements BenchmarkDao {
     }
 
     @Override
+    public int searchLegendaryOwners(String requester) {
+        em.clear();
+        String jpql = """
+                SELECT DISTINCT p.playername FROM Player p JOIN p.teams t JOIN t.members m
+                WHERE m.legendary = true AND p.playername <> :requester
+                """;
+        return em.createQuery(jpql, String.class)
+                .setParameter("requester", requester)
+                .getResultList()
+                .size();
+    }
+
+    @Override
+    public int searchActiveLegendaryOfType(String requester, String type) {
+        em.clear();
+        String jpql = """
+                SELECT DISTINCT p.playername FROM Player p JOIN p.currentTeam ct JOIN ct.members m
+                WHERE m.legendary = true AND m.type1 = :type AND p.playername <> :requester
+                """;
+        return em.createQuery(jpql, String.class)
+                .setParameter("type", type)
+                .setParameter("requester", requester)
+                .getResultList()
+                .size();
+    }
+
+    @Override
     public void close() {
         if (em != null && em.isOpen())
             em.close();
