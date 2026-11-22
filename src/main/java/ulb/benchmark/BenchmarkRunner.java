@@ -12,6 +12,8 @@ public class BenchmarkRunner {
 
     private static final int RUNS_COUNT = 6; // 1 warm-up + 5 tested runs
 
+    private static final String SEARCH_TYPE = "Dragon";
+
     public double runInsertionBenchmark(BenchmarkDao dao, Supplier<List<Player>> datasetSupplier, String systemName,
             int datasetSize) {
         System.out.println("\n==========================================");
@@ -70,6 +72,30 @@ public class BenchmarkRunner {
         });
     }
 
+    public double runSearchLegendaryBenchmark(BenchmarkDao dao, List<Player> dataset, String systemName,
+            int datasetSize) {
+        return runSearchBenchmark("SEARCH_LEG", dataset, systemName, datasetSize, dao::searchLegendaryOwners);
+    }
+
+    public double runSearchActiveTeamBenchmark(BenchmarkDao dao, List<Player> dataset, String systemName,
+            int datasetSize) {
+        return runSearchBenchmark("SEARCH_ACT", dataset, systemName, datasetSize,
+                requester -> dao.searchActiveLegendaryOfType(requester, SEARCH_TYPE));
+    }
+
+    private double runSearchBenchmark(String operation, List<Player> dataset, String systemName, int datasetSize,
+            SearchQuery query) {
+        // A different requester on each run, so ObjectDB cannot answer from its query result cache
+        Random random = new Random(12345L);
+        List<Integer> counts = new ArrayList<>();
+        double average = runTimedBenchmark(operation, systemName, datasetSize, i -> {
+            String requester = dataset.get(random.nextInt(dataset.size())).getPlayername();
+            counts.add(query.run(requester));
+        });
+        System.out.printf("--> %s results per run for %s : %s%n", operation, systemName, counts);
+        return average;
+    }
+
     private double runTimedBenchmark(String operation, String systemName, int datasetSize, BenchmarkOperation benchmark)
             throws RuntimeException {
         System.out.println("\n==========================================");
@@ -104,5 +130,10 @@ public class BenchmarkRunner {
     @FunctionalInterface
     private interface BenchmarkOperation {
         void run(int iteration) throws Exception;
+    }
+
+    @FunctionalInterface
+    private interface SearchQuery {
+        int run(String requester) throws Exception;
     }
 }
