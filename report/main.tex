@@ -13,6 +13,8 @@
 \usepackage{booktabs}
 \usepackage{ragged2e}
 \usepackage{float}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 \newcolumntype{L}{>{\RaggedRight\arraybackslash}X}
 \usetikzlibrary{positioning, arrows.meta, fit, backgrounds}
 
@@ -576,7 +578,7 @@ In the relational model, object structures with nested collections and reference
 ObjectDB leverages standard Java Persistence API (JPA) annotations to persist an object graph directly, while preserving object integrity without resorting to relational normalization:
 \begin{itemize}
   \item \textbf{Entities vs. Embeddables}: \texttt{Player} and \texttt{Team} are declared as standalone persistent entities (\texttt{@Entity}). \texttt{Pokemon} and \texttt{Item} are lightweight value objects decorated with \texttt{@Embeddable}.
-  \item \textbf{Direct Collection \& Map Storage}: Player inventories are mapped directly as a key-value map using \texttt{@ElementCollection Map<Item, Integer>}. Team membership lists (\texttt{List}) are embedded directly within the parent \texttt{Team} instance.
+  \item \textbf{Direct Collection \& Map Storage}: Player inventories are mapped directly as a key-value map using \texttt{@ElementCollection Map<Item, Integer>}. Team membership lists (\texttt{List<Pokemon>}) are embedded directly within the parent \texttt{Team} instance.
   \item \textbf{Object Relationships}: Relationships are defined using cascade options (\texttt{CascadeType.ALL}) associated with \texttt{@OneToMany} and \texttt{@OneToOne}, which enables full persistence by reachability when saving a \texttt{Player} object.
 \end{itemize}
 
@@ -802,7 +804,7 @@ Our experimental results across datasets ranging from $1\,000$ to $1\,000\,000$ 
 
 Finally, \textbf{object-oriented databases prove to be the technology of choice for our RPG application domain}. For a stateful Java backend managing complex, write-intensive player graphs, \textbf{ObjectDB} offers the optimal combination of ingestion speed, transparent dirty tracking, and JPA standard portability, though it does require a commercial license to exceed the one-million-entity threshold. Conversely, for read-heavy client-side, mobile, or offline-first deployments where sub-millisecond profile loading is paramount, \textbf{ObjectBox} stands out as the ideal storage engine. Future work could explore evaluating ObjectDB under an enterprise license and in client-server mode at multi-million-entity scale.
 
-\section{Bibliography and Appendices}
+\section{Bibliography}
 
 \begin{thebibliography}{99}
 
