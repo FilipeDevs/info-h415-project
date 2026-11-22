@@ -638,7 +638,7 @@ For each generated player profile:
 \subsection{Summary of results}
 The raw timing results collected across all benchmarking suites are summarized in Table~\ref{tab:benchmark_results}. Metrics report average execution time in milliseconds over the five measured iterations ($N = 1\text{K}, 10\text{K}, 100\text{K}, 1\text{M}$).
 
-\begin{table}[htbp]
+\begin{table}[H]
   \centering
   \small
   \begin{tabular}{lrrrr}
@@ -672,10 +672,63 @@ Overall, both object-oriented systems outperform PostgreSQL by approximately an 
 \subsection{Scalability analysis}
 
 \subsubsection{Insertion rate and scaling of complex objects}
-Insertion latency highlights the fundamental architectural divergence between relational decomposition and object graph persistence:
+Insertion latency highlights the fundamental architectural divergence between relational decomposition and object graph persistence (Figure~\ref{fig:bench_insert}):
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+        width=0.88\textwidth,
+        height=6.2cm,
+        title={\textbf{Bulk Insertion Latency (Log-Log Scale)}},
+        xlabel={Number of Players ($N$)},
+        ylabel={Average Execution Time (ms)},
+        xmode=log,
+        ymode=log,
+        xtick={1000, 10000, 100000, 1000000},
+        xticklabels={1K, 10K, 100K, 1M},
+        ymin=20, ymax=1500000,
+        grid=both,
+        major grid style={line width=.2pt, draw=gray!40},
+        minor grid style={line width=.1pt, draw=gray!15},
+        legend pos=north west,
+        legend style={font=\small, draw=gray!50, fill=white, fill opacity=0.9},
+        every axis plot/.append style={thick, mark size=2.5pt}
+      ]
+
+      % PostgreSQL
+      \addplot[color=blue!75!black, mark=square*] coordinates {
+          (1000, 505.23)
+          (10000, 5833.41)
+          (100000, 61100.10)
+          (1000000, 674640.10)
+        };
+      \addlegendentry{PostgreSQL}
+
+      % ObjectDB
+      \addplot[color=teal!80!black, mark=*] coordinates {
+          (1000, 46.98)
+          (10000, 482.75)
+          (100000, 3643.15)
+        };
+      \addlegendentry{ObjectDB}
+
+      % ObjectBox
+      \addplot[color=orange!85!black, mark=triangle*] coordinates {
+          (1000, 95.14)
+          (10000, 1151.15)
+          (100000, 10183.68)
+        };
+      \addlegendentry{ObjectBox}
+
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Bulk insertion latency across dataset sizes ($1\text{K}$ to $1\text{M}$ players). Parallel slopes confirm linear $O(N)$ scaling, with ObjectDB and ObjectBox outperforming PostgreSQL by an order of magnitude.}
+  \label{fig:bench_insert}
+\end{figure}
 
 \begin{itemize}
-  \item \textbf{PostgreSQL:} Insertion time grows almost linearly from 505.23 ms at 1K to 674 640.10 ms at 1M ($1.33 \approx 1$ from $1\text{K}$ to 1M). Throughput peaks at $\approx 1\,980\text{ players/s}$ at $1\text{K}$ (and $\approx 1\,714\text{ players/s}$ at $10\text{K}$) and declines to $\approx 1\,482\text{ players/s}$ at $1\text{M}$. Even with JDBC batch rewriting enabled (\texttt{reWrite\-BatchedInserts=true}), persisting a single \texttt{Player} object graph requires flattening nested collections into normalized rows across four tables (\texttt{players}, \texttt{teams}, \texttt{team\_members}, and \texttt{item\_player}), validating foreign key constraints, to write records to the transaction log via a TCP socket, etc.
+  \item \textbf{PostgreSQL:} Insertion time grows almost linearly from 505.23 ms at 1K to 674 640.10 ms at 1M (a $1.33\times$ increase in per-player cost, reflected by the near-unit slope in Figure~\ref{fig:bench_insert}). Throughput peaks at $\approx 1\,980\text{ players/s}$ at $1\text{K}$ (and $\approx 1\,714\text{ players/s}$ at $10\text{K}$) and declines to $\approx 1\,482\text{ players/s}$ at $1\text{M}$. Even with JDBC batch rewriting enabled (\texttt{reWrite\-BatchedInserts=true}), persisting a single \texttt{Player} object graph requires flattening nested collections into normalized rows across four tables (\texttt{players}, \texttt{teams}, \texttt{team\_members}, and \texttt{item\_player}), validating foreign key constraints, to write records to the transaction log via a TCP socket, etc.
 
   \item \textbf{ObjectDB:} ObjectDB achieves the highest ingestion throughput across all completed scales, running $10.75\times$ faster than PostgreSQL at $1\text{K}$ ($46.98\text{ ms}$), $12.08\times$ faster at $10\text{K}$ ($482.75\text{ ms}$, scaling linearly by $10.28\times$), and $16.77\times$ faster at $100\text{K}$ ($3\,643.15\text{ ms}$, roughly $27\,450\text{ players/s}$). Because \texttt{Pokemon} and \texttt{Item} are stored as \texttt{@Embeddable} value objects and \texttt{Team} relationships use \texttt{CascadeType.ALL}, ObjectDB traverses the reachability graph in memory and writes contiguous object pages directly into a single \texttt{.odb} file without join-table fan-out.
 
@@ -683,10 +736,107 @@ Insertion latency highlights the fundamental architectural divergence between re
 \end{itemize}
 
 \subsubsection{Point retrieval (GET) and graph traversal latency}
-Point retrieval measures the cost of locating a single \texttt{Player} by identifier and reconstructing its complete object graph (owned teams, team rosters, and inventory items):
+Point retrieval measures the cost of locating a single \texttt{Player} by identifier and reconstructing its complete object graph (owned teams, team rosters, and inventory items), as shown in Figure~\ref{fig:bench_get_update} (left):
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[
+          width=\textwidth,
+          height=5.6cm,
+          title={\textbf{Point Retrieval (GET)}},
+          xlabel={Number of Players ($N$)},
+          ylabel={Latency (ms)},
+          xmode=log,
+          xtick={1000, 10000, 100000, 1000000},
+          xticklabels={1K, 10K, 100K, 1M},
+          ymin=0, ymax=2.3,
+          grid=major,
+          major grid style={line width=.2pt, draw=gray!30},
+          legend pos=north west,
+          legend style={font=\scriptsize, draw=gray!50},
+          every axis plot/.append style={thick, mark size=2.2pt}
+        ]
+
+        \addplot[color=blue!75!black, mark=square*] coordinates {
+            (1000, 1.46)
+            (10000, 1.52)
+            (100000, 1.73)
+            (1000000, 1.74)
+          };
+        \addlegendentry{PostgreSQL}
+
+        \addplot[color=teal!80!black, mark=*] coordinates {
+            (1000, 0.60)
+            (10000, 0.29)
+            (100000, 0.84)
+          };
+        \addlegendentry{ObjectDB}
+
+        \addplot[color=orange!85!black, mark=triangle*] coordinates {
+            (1000, 0.21)
+            (10000, 0.12)
+            (100000, 0.21)
+          };
+        \addlegendentry{ObjectBox}
+
+      \end{axis}
+    \end{tikzpicture}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[
+          width=\textwidth,
+          height=5.6cm,
+          title={\textbf{Transactional Update (UPDATE)}},
+          xlabel={Number of Players ($N$)},
+          ylabel={Latency (ms)},
+          xmode=log,
+          xtick={1000, 10000, 100000, 1000000},
+          xticklabels={1K, 10K, 100K, 1M},
+          ymin=0, ymax=2.5,
+          grid=major,
+          major grid style={line width=.2pt, draw=gray!30},
+          legend pos=north west,
+          legend style={font=\scriptsize, draw=gray!50},
+          every axis plot/.append style={thick, mark size=2.2pt}
+        ]
+
+        \addplot[color=blue!75!black, mark=square*] coordinates {
+            (1000, 1.74)
+            (10000, 2.11)
+            (100000, 1.81)
+            (1000000, 1.83)
+          };
+        \addlegendentry{PostgreSQL}
+
+        \addplot[color=teal!80!black, mark=*] coordinates {
+            (1000, 0.33)
+            (10000, 0.23)
+            (100000, 0.31)
+          };
+        \addlegendentry{ObjectDB}
+
+        \addplot[color=orange!85!black, mark=triangle*] coordinates {
+            (1000, 0.27)
+            (10000, 0.29)
+            (100000, 0.41)
+          };
+        \addlegendentry{ObjectBox}
+
+      \end{axis}
+    \end{tikzpicture}
+  \end{minipage}
+  \caption{Comparison of single-profile retrieval (left) and transactional inventory update latency (right) across scales.}
+  \label{fig:bench_get_update}
+\end{figure}
 
 \begin{itemize}
-  \item \textbf{PostgreSQL:} Retrieval latency exhibits logarithmic-to-constant scaling across three orders of magnitude, rising by only $19.2\%$ ($1.19\times$) from $1.46\text{ ms}$ at $1\text{K}$ to $1.74\text{ ms}$ at $1\text{M}$. Whileforeign key indexes keep lookup times tightly bounded even at one million players, absolute latency remains higher than in both OODBMSs. Reconstructing a single player profile requires traversing normalized junction tables (\texttt{teams}, \texttt{team\_members}, \texttt{item\_player}), incurring TCP/IP round-trip communication overhead.
+  \item \textbf{PostgreSQL:} Retrieval latency exhibits logarithmic-to-constant scaling across three orders of magnitude, rising by only $19.2\%$ ($1.19\times$) from $1.46\text{ ms}$ at $1\text{K}$ to $1.74\text{ ms}$ at $1\text{M}$. While foreign key indexes keep lookup times tightly bounded even at one million players, absolute latency remains higher than in both OODBMSs. Reconstructing a single player profile requires traversing normalized junction tables (\texttt{teams}, \texttt{team\_members}, \texttt{item\_player}), incurring TCP/IP round-trip communication overhead.
 
   \item \textbf{ObjectDB:} ObjectDB retrieves full player graphs $2.06\times$ to $5.24\times$ faster than PostgreSQL, recording $0.60\text{ ms}$ at $1\text{K}$, $0.29\text{ ms}$ at $10\text{K}$, and $0.84\text{ ms}$ at $100\text{K}$. Embedded execution eliminates network serialization, while direct object references allow the \texttt{EntityManager} to materialize owned \texttt{Team} entities and embedded \texttt{Pokemon} and \texttt{Item} collections without relational joins. The initial drop from $0.60\text{ ms}$ to $0.29\text{ ms}$ reflects JVM Just-In-Time (JIT) compilation and page-cache warming, whereas the increase to $0.84\text{ ms}$ at $100\text{K}$ (where total stored \texttt{Player} and \texttt{Team} entities approach the one-million mark) stems from larger index traversals, page-cache misses, and Java heap allocation overhead.
 
@@ -695,14 +845,14 @@ Point retrieval measures the cost of locating a single \texttt{Player} by identi
 
 
 \subsubsection{Entity updates and transactional persistence}
-Transactional updates evaluate the overhead of mutating an existing persistent player state and committing the change to durable storage:
+Transactional updates evaluate the overhead of mutating an existing persistent player state and committing the change to durable storage (Figure~\ref{fig:bench_get_update}, right):
 
 \begin{itemize}
-  \item \textbf{PostgreSQL:} Update latency stays nearly flat across all dataset sizes, fluctuating within a narrow band between $1.74\text{ ms}$  for $1\text{K}$ and $2.11\text{ ms}$ for $10\text{K}$, and stabilizing at $1.81\text{ ms}$ for $100\text{K}$ and $1.83\text{ ms}$ for $1\text{M}$. Execution time is primarily determined by fixed costs per transaction: network round-trips between the client and the server, execution of SQL statements, etc.
+  \item \textbf{PostgreSQL:} Update latency stays nearly flat across all dataset sizes, fluctuating within a narrow band between $1.74\text{ ms}$  for $1\text{K}$ and $2.11\text{ ms}$ for $10\text{K}$, and stabilizing at $1.81\text{ ms}$ for $100\text{K}$ and $1.83\text{ ms}$ for $1\text{M}$. Execution time is primarily determined by fixed costs per transaction: network round-trips between the client and the server and SQL statement execution.
 
   \item \textbf{ObjectDB:} ObjectDB sustains an almost constant update latency of $0.33\text{ ms}$ at $1\text{K}$, $0.23\text{ ms}$ at $10\text{K}$, and $0.31\text{ ms}$ at $100\text{K}$, outperforming PostgreSQL by $5.27\times$ to $9.17\times$. Through JPA transparent persistence and automatic dirty tracking within the active \texttt{EntityManager}, mutations applied to a managed \texttt{Player} instance are detected in memory and flushed directly to the corresponding object pages in the \texttt{.odb} file upon transaction commit, bypassing query translation.
 
-  \item \textbf{ObjectBox:} ObjectBox achieves comparable update performance, recording $0.27\text{ ms}$ at $1\text{K}$, $0.29\text{ ms}$ at $10\text{K}$, and $0.41\text{ ms}$ at $100\text{K}$ ($4.41\times$ to $7.28\times$ faster than PostgreSQL). Unlike its flat read profile, ObjectBox's latency increase by $+51.9\%$ between $1\text{K}$ and $100\text{K}$ ($0.27\text{ ms}$ to $0.41\text{ ms}$), becoming slightly slower ($1.26\times$ to $1.32\times$) than ObjectDB at $10\text{K}$ and $100\text{K}$. Updating a player graph in ObjectBox requires re-serializing modified FlatBuffer records and synchronizing intermediate relation entities (such as \texttt{InventoryEntry} and \texttt{Team} links) inside \texttt{store.runInTx()}.
+  \item \textbf{ObjectBox:} ObjectBox achieves comparable update performance, recording $0.27\text{ ms}$ at $1\text{K}$, $0.29\text{ ms}$ at $10\text{K}$, and $0.41\text{ ms}$ at $100\text{K}$ ($4.41\times$ to $7.28\times$ faster than PostgreSQL). Unlike its flat read profile, ObjectBox's latency increases by $+51.9\%$ between $1\text{K}$ and $100\text{K}$ ($0.27\text{ ms}$ to $0.41\text{ ms}$), becoming slightly slower ($1.26\times$ to $1.32\times$) than ObjectDB at $10\text{K}$ and $100\text{K}$. Updating a player graph in ObjectBox requires re-serializing modified FlatBuffer records and synchronizing intermediate relation entities (such as \texttt{InventoryEntry} and \texttt{Team} links) inside \texttt{store.runInTx()}.
 \end{itemize}
 
 \subsection{Critical analysis by DBMS}
@@ -713,14 +863,14 @@ PostgreSQL illustrates the classic trade-offs inherent in relational database ma
 However, PostgreSQL is the \emph{only} evaluated system capable of completing the full $1\,000\,000$-player benchmark without failure or restriction. PostgreSQL proves to be the most resilient choice when dataset volume exceeds single-node embedded limits or requires shared multi-process access.
 
 \subsubsection{ObjectDB}
-ObjectDB aligns closest with the conceptual domain model and eliminates the impedance mismatch almost entirely. Using standard JPA annotations (\texttt{@Entity}, \texttt{@Embeddable}, \texttt{@ElementCollection}, and \texttt{Cascade\-Type.ALL}), complex collections such as player inventories (\texttt{Map<Item, Integer>}) and team rosters are persisted natively via reachability. This direct mapping between objects and pages enables the highest insertion rates in the benchmark for bulk data insertion. (up to $16.77\times$ faster than PostgreSQL at $100\text{K}$) as well as rapid, constant-time transactional updates ($0.23$ to $0.33\text{ ms}$). Furthermore, using JPA preserves portability to relational storage systems should architectural requirements evolve.
+ObjectDB aligns closest with the conceptual domain model and eliminates the impedance mismatch almost entirely. Using standard JPA annotations (\texttt{@Entity}, \texttt{@Embeddable}, \texttt{@ElementCollection}, and \texttt{Cascade\-Type.ALL}), complex collections such as player inventories (\texttt{Map<Item, Integer>}) and team rosters are persisted natively via reachability. This direct mapping between objects and pages enables the highest insertion rates in the benchmark for bulk data insertion (up to $16.77\times$ faster than PostgreSQL at $100\text{K}$) as well as rapid, constant-time transactional updates ($0.23$ to $0.33\text{ ms}$). Furthermore, using JPA preserves portability to relational storage systems should architectural requirements evolve.
 
 However, ObjectDB has a notable drawback. Its commercial licensing model limits the free edition to 1 million persistent entity instances and 10 persistable classes. Given that each \texttt{Player} entity can have up to 10 distinct \texttt{Team} entities, scaling to support 1 million players results in approximately 6.5 million entity objects hitting the strict limit imposed by the license.
 
 \subsubsection{ObjectBox}
 ObjectBox is built for ultra-low-latency embedded persistence, and the empirical results confirm its strength on read-heavy workloads. Powered by a native C++ storage engine, memory-mapped file I/O, and zero-copy FlatBuffers serialization, it achieves sub-millisecond point retrievals ($0.12$ to $0.21\text{ ms}$) that remain invariant from $1\text{K}$ to $100\text{K}$ players, outperforming PostgreSQL by up to $12.67\times$ and ObjectDB by up to $4.00\times$.
 
-Its limitations stem from its data model expressiveness, proprietary API, and memory-mapped architecture at extreme scale. Because ObjectBox does not natively support embedded key-value maps, inventories must be manually normalized into auxiliary \texttt{InventoryEntry} entities, linked via \texttt{ToOne} and \texttt{ToMany}relationships, that makes bulk inserts $2.03\times$ to $2.80\times$ slower than ObjectDB. In addition, the system exhibits visible latency spikes when expanding its memory-mapped store (Run~2) and reaches native memory-mapped storage and reset limits at the $1\text{M}$-player scale, where tens of millions of interconnected entities must be managed within a single embedded store.
+Its limitations stem from its data model expressiveness, proprietary API, and memory-mapped architecture at extreme scale. Because ObjectBox does not natively support embedded key-value maps, inventories must be manually normalized into auxiliary \texttt{InventoryEntry} entities, linked via \texttt{ToOne} and \texttt{ToMany} relationships, that makes bulk inserts $2.03\times$ to $2.80\times$ slower than ObjectDB. In addition, the system exhibits visible latency spikes when expanding its memory-mapped store (Run~2) and reaches native memory-mapped storage and reset limits at the $1\text{M}$-player scale, where tens of millions of interconnected entities must be managed within a single embedded store.
 
 \section{Overall Assessment: Pros and Cons}
 Performance test results from our benchmarks demonstrate that, \textbf{for our RPG application domain, object-oriented database management systems are clearly the preferred technology over traditional relational systems like PostgreSQL.} Since player profiles consist of deeply nested object graphs, such as collections of teams, ordered rosters, and item inventories that are accessed and modified as coherent units, eliminating the impedance mismatch between object-oriented and relational systems yields significant gains in data persistence, with individual operations executing in under a millisecond. Nevertheless, PostgreSQL, ObjectDB, and ObjectBox each entail distinct operational trade-offs regarding licensing, memory footprint, and horizontal scalability that must be carefully considered for production deployment.
