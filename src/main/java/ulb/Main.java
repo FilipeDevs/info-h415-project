@@ -21,6 +21,7 @@ import ulb.benchmark.DatasetGenerator;
 import ulb.dao.ObjectBoxDao;
 import ulb.dao.ObjectDbDao;
 import ulb.dao.PostgresDao;
+import ulb.exception.DaoException;
 import ulb.object_db_model.Player;
 
 public class Main {
@@ -117,10 +118,23 @@ public class Main {
     }
 
     private static void runReadAndUpdateBenchmarks(BenchmarkRunner benchmarkRunner, ulb.dao.BenchmarkDao dao,
-            List<Player> dataset, String systemName, int datasetSize, List<BenchmarkResult> results) {
+            List<Player> dataset, String systemName, int datasetSize, List<BenchmarkResult> results)
+            throws DaoException {
+
+        dao.refreshStatistics();
 
         double getTime = benchmarkRunner.runGetBenchmark(dao, dataset, systemName, datasetSize);
         results.add(new BenchmarkResult("GET", systemName, datasetSize, getTime));
+
+        triggerGc();
+
+        double searchLegTime = benchmarkRunner.runSearchLegendaryBenchmark(dao, dataset, systemName, datasetSize);
+        results.add(new BenchmarkResult("SEARCH_LEG", systemName, datasetSize, searchLegTime));
+
+        triggerGc();
+
+        double searchActTime = benchmarkRunner.runSearchActiveTeamBenchmark(dao, dataset, systemName, datasetSize);
+        results.add(new BenchmarkResult("SEARCH_ACT", systemName, datasetSize, searchActTime));
 
         triggerGc();
 
