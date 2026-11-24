@@ -19,3 +19,4 @@ players_1000000.json
 main.pdf
 .vscode
 build
+objectbox-models/*.bak

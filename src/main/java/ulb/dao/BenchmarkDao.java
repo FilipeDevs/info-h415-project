@@ -16,6 +16,13 @@ public interface BenchmarkDao extends AutoCloseable {
 
     void updateInventoryAmount(String playername, String itemName, int amount) throws DaoException;
 
+    int searchLegendaryOwners(String requester) throws DaoException;
+
+    int searchActiveLegendaryOfType(String requester, String type) throws DaoException;
+
+    default void refreshStatistics() throws DaoException {
+    }
+
     @Override
     void close() throws Exception;
 }

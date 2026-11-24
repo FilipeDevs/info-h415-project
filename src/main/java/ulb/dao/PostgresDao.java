@@ -266,6 +266,66 @@ public class PostgresDao implements BenchmarkDao {
         }
     }
 
+    @Override
+    public int searchLegendaryOwners(String requester) throws DaoException {
+        String sql = """
+                SELECT p.playername
+                FROM players p
+                WHERE p.playername <> ?
+                  AND EXISTS (SELECT 1 FROM team_members tm JOIN pokemons pk ON pk.id = tm.pokemon_id
+                              WHERE tm.playername = p.playername AND pk.legendary)
+                """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, requester);
+            return countRows(ps);
+        } catch (SQLException e) {
+            throw new DaoException("Error while searching legendary owners with PostgreSQL", e);
+        }
+    }
+
+    @Override
+    public int searchActiveLegendaryOfType(String requester, String type) throws DaoException {
+        String sql = """
+                SELECT p.playername
+                FROM players p
+                WHERE p.playername <> ?
+                  AND EXISTS (SELECT 1 FROM team_members tm JOIN pokemons pk ON pk.id = tm.pokemon_id
+                              WHERE tm.playername = p.playername AND tm.team_name = p.current_team
+                                AND pk.legendary AND pk.type1 = ?)
+                """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, requester);
+            ps.setString(2, type);
+            return countRows(ps);
+        } catch (SQLException e) {
+            throw new DaoException("Error while searching active team legendaries with PostgreSQL", e);
+        }
+    }
+
+    @Override
+    public void refreshStatistics() throws DaoException {
+        // TRUNCATE resets the planner statistics, so without this the first queries may get a bad plan
+        try (var stmt = connection.createStatement()) {
+            stmt.execute("ANALYZE players, teams, team_members, item_player");
+            connection.commit();
+        } catch (SQLException e) {
+            throw new DaoException("Error while analyzing PostgreSQL tables", e);
+        }
+    }
+
+    private int countRows(PreparedStatement ps) throws SQLException {
+        int rows = 0;
+        try (var rs = ps.executeQuery()) {
+            while (rs.next()) {
+                rs.getString(1);
+                rows++;
+            }
+        }
+        return rows;
+    }
+
     private void executeAllBatches(PreparedStatement psPlayer,
             PreparedStatement psTeam, PreparedStatement psTeamMember,
             PreparedStatement psUpdatePlayerTeam, PreparedStatement psItemPlayer) throws Exception {
