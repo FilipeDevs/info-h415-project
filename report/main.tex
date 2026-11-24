@@ -551,6 +551,8 @@ The application domain selected for this benchmark is inspired by a multiplayer 
 
 This domain serves as an ideal case study for comparing Object-Oriented Database Management Systems (OODBMS) with traditional Relational Database Management Systems (RDBMS). Player profiles exhibit a high degree of structural complexity, including nested collections of variable length (such as lists of team members or associations between inventory items and their quantities), object composition, and complex references between entities.
 
+In addition to reading and updating individual profiles, the application must also be able to search across all players, for example to find suitable opponents during matchmaking. Unlike loading or updating a single profile, a search like this has to look inside the teams of every player, for instance to find those who own a legendary Pokemon.
+
 \subsection{Conceptual schema and data models}
 
 To compare the relational approach with implementations in object-oriented databases, the RPG domain model is represented using three distinct data modeling paradigms: a conceptual domain model, a normalized relational model, and object-oriented data models.
@@ -602,8 +604,10 @@ The software adopts a multi-level architecture, structured around three key laye
 
 \subsubsection{Design Patterns and Implementation Details}
 \begin{itemize}
-  \item \textbf{Data Access Object (DAO) Pattern}: The \texttt{BenchmarkDao} interface defines six methods: \texttt{init()}, \texttt{clearDatabase()}, \texttt{insertPlayers()}, \texttt{getPlayerWithRelations()}, \texttt{updateInventoryAmount()}, and \texttt{close()}. This abstraction guarantees that the benchmarking execution loop remains entirely decoupled from concrete persistence drivers.
-  \item \textbf{Relational Query and Batch Execution}: The \texttt{PostgresDao} implementation uses JDBC prepared statement batching along with the \texttt{reWriteBatchedInserts=true} connection property to optimize multi-row insertions. For point retrieval (\texttt{GET}), it executes two parameterized \texttt{SELECT} statements (including a \texttt{LEFT JOIN} across \texttt{teams} and \texttt{team\_members}, plus a lookup on \texttt{item\_player}) to reconstruct the full player profile. For updates (\texttt{UPDATE}), it executes a joined \texttt{UPDATE ... FROM items} statement followed by an explicit \texttt{connection.commit()}.
+  \item \textbf{Data Access Object (DAO) Pattern}: The \texttt{BenchmarkDao} interface defines nine methods: \texttt{init()}, \texttt{clearDatabase()}, \texttt{insertPlayers()}, \texttt{getPlayerWithRelations()}, \texttt{updateInventoryAmount()},
+  \\
+  \texttt{searchLegendaryOwners()}, \texttt{searchActiveLegendaryOfType()}, \texttt{refreshStatistics()}, and \texttt{close()}. This abstraction guarantees that the benchmarking execution loop remains entirely decoupled from concrete persistence drivers.
+  \item \textbf{Relational Query and Batch Execution}: The \texttt{PostgresDao} implementation uses JDBC prepared statement batching along with the \texttt{reWriteBatchedInserts=true} connection property to optimize multi-row insertions. For point retrieval (\texttt{GET}), it executes two parameterized \texttt{SELECT} statements (including a \texttt{LEFT JOIN} across \texttt{teams} and \texttt{team\_members}, plus a lookup on \texttt{item\_player}) to reconstruct the full player profile. For updates (\texttt{UPDATE}), it executes a joined \texttt{UPDATE ... FROM items} statement followed by an explicit \texttt{connection.commit()}. For the multi-criteria searches (\texttt{SEARCH\_LEG} and \texttt{SEARCH\_ACT}), it executes a single \texttt{SELECT} on \texttt{players} filtered by a correlated \texttt{EXISTS} subquery that joins \texttt{team\_members} with the \texttt{pokemons} catalog, restricted to the player's \texttt{current\_team} for \texttt{SEARCH\_ACT}. Because each insertion run empties the tables with \texttt{TRUNCATE}, which resets the optimizer statistics, \texttt{refreshStatistics()} executes \texttt{ANALYZE} once after the insertion benchmark, outside any timed section, so that the query planner relies on up-to-date statistics.
   \item \textbf{Object-Oriented Transaction and Cache Management}: \texttt{ObjectDbDao} manages bulk persistence through an active JPA \texttt{EntityManager} transaction using cascade reachability (with periodic \texttt{flush()}/\texttt{clear()} calls every $5\,000$ players), whereas \texttt{ObjectBoxDao} executes atomic batch \texttt{put()} operations inside native \texttt{store.runInTx()} blocks. During \texttt{GET} benchmarks, \texttt{ObjectDbDao} invokes \texttt{em.clear()} prior to \texttt{em.find()} and \texttt{ObjectBoxDao} invokes \texttt{store.closeThreadResources()} before querying \texttt{Player\_.playername}, ensuring session caches are bypassed before traversing all nested relations. For \texttt{UPDATE} operations, \texttt{ObjectDbDao} relies on JPA dirty tracking to flush in-memory \texttt{Map} mutations upon transaction commit, while \texttt{ObjectBoxDao} locates the target \texttt{InventoryEntry} and explicitly persists it via \texttt{put()} inside \texttt{store.runInTx()}.
 \end{itemize}
 
@@ -659,6 +663,16 @@ The raw timing results collected across all benchmarking suites are summarized i
     \quad PostgreSQL          & 1.74                   & 2.11                    & 1.81                     & 1.83                       \\
     \quad ObjectDB            & 0.33                   & 0.23                    & 0.31                     & N/A*                       \\
     \quad ObjectBox           & 0.27                   & 0.29                    & 0.41                     & N/A**                      \\
+    \midrule
+    \multicolumn{5}{l}{\textbf{SEARCH\_LEG Avg Time (ms)}}                                                                           \\
+    \quad PostgreSQL          &                        &                         &                          &                            \\
+    \quad ObjectDB            &                        &                         &                          &                            \\
+    \quad ObjectBox           &                        &                         &                          &                            \\
+    \midrule
+    \multicolumn{5}{l}{\textbf{SEARCH\_ACT Avg Time (ms)}}                                                                           \\
+    \quad PostgreSQL          &                        &                         &                          &                            \\
+    \quad ObjectDB            &                        &                         &                          &                            \\
+    \quad ObjectBox           &                        &                         &                          &                            \\
     \bottomrule
   \end{tabular}
   \\ * The free evaluation offer for ObjectDB imposes a strict limit of one million entities. \\
@@ -855,6 +869,17 @@ Transactional updates evaluate the overhead of mutating an existing persistent p
   \item \textbf{ObjectBox:} ObjectBox achieves comparable update performance, recording $0.27\text{ ms}$ at $1\text{K}$, $0.29\text{ ms}$ at $10\text{K}$, and $0.41\text{ ms}$ at $100\text{K}$ ($4.41\times$ to $7.28\times$ faster than PostgreSQL). Unlike its flat read profile, ObjectBox's latency increases by $+51.9\%$ between $1\text{K}$ and $100\text{K}$ ($0.27\text{ ms}$ to $0.41\text{ ms}$), becoming slightly slower ($1.26\times$ to $1.32\times$) than ObjectDB at $10\text{K}$ and $100\text{K}$. Updating a player graph in ObjectBox requires re-serializing modified FlatBuffer records and synchronizing intermediate relation entities (such as \texttt{InventoryEntry} and \texttt{Team} links) inside \texttt{store.runInTx()}.
 \end{itemize}
 
+\subsubsection{Multi-criteria search - TODO}
+Multi-criteria searches evaluate how each system filters the whole population of players on criteria spread across their object graph, either over all of a player's teams (\texttt{SEARCH\_LEG}) or over the active team only (\texttt{SEARCH\_ACT}):
+
+\begin{itemize}
+  \item \textbf{PostgreSQL:}
+
+  \item \textbf{ObjectDB:}
+
+  \item \textbf{ObjectBox:}
+\end{itemize}
+
 \subsection{Critical analysis by DBMS}
 
 \subsubsection{PostgreSQL}
@@ -897,6 +922,8 @@ Table~\ref{tab:overall_comparison} contrasts the three evaluated systems across 
     \textbf{Point Read (GET) Latency}       & Moderate ($1.46$ to $1.74\text{ ms}$, join \& IPC overhead)                    & Low ($0.29$ to $0.84\text{ ms}$)                                                 & \textbf{Lowest} ($0.12$ to $0.21\text{ ms}$)                                      \\
     \addlinespace[4pt]
     \textbf{Update Latency}                 & Moderate ($1.74$ to $2.11\text{ ms}$, network \& WAL sync)                     & \textbf{Lowest at scale} ($0.23$ to $0.33\text{ ms}$)                            & Very low ($0.27$ to $0.41\text{ ms}$)                                             \\
+    \addlinespace[4pt]
+    \textbf{Multi-criteria Search}          &                                                                                &                                                                                  &                                                                                   \\
     \addlinespace[4pt]
     \textbf{Scalability Limit (1M Players)} & \textbf{Completed} without restriction                                         & Blocked by free license ($1\text{M}$ entity cap)                                 & Hit native \texttt{mmap} storage/reset limits                                     \\
     \addlinespace[4pt]
