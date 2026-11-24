@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -267,7 +268,7 @@ public class PostgresDao implements BenchmarkDao {
     }
 
     @Override
-    public int searchLegendaryOwners(String requester) throws DaoException {
+    public List<String> searchLegendaryOwners(String requester) throws DaoException {
         String sql = """
                 SELECT p.playername
                 FROM players p
@@ -278,14 +279,14 @@ public class PostgresDao implements BenchmarkDao {
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, requester);
-            return countRows(ps);
+            return fetchNames(ps);
         } catch (SQLException e) {
             throw new DaoException("Error while searching legendary owners with PostgreSQL", e);
         }
     }
 
     @Override
-    public int searchActiveLegendaryOfType(String requester, String type) throws DaoException {
+    public List<String> searchActiveLegendaryOfType(String requester, String type) throws DaoException {
         String sql = """
                 SELECT p.playername
                 FROM players p
@@ -298,7 +299,7 @@ public class PostgresDao implements BenchmarkDao {
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, requester);
             ps.setString(2, type);
-            return countRows(ps);
+            return fetchNames(ps);
         } catch (SQLException e) {
             throw new DaoException("Error while searching active team legendaries with PostgreSQL", e);
         }
@@ -315,15 +316,14 @@ public class PostgresDao implements BenchmarkDao {
         }
     }
 
-    private int countRows(PreparedStatement ps) throws SQLException {
-        int rows = 0;
+    private List<String> fetchNames(PreparedStatement ps) throws SQLException {
+        List<String> names = new ArrayList<>();
         try (var rs = ps.executeQuery()) {
             while (rs.next()) {
-                rs.getString(1);
-                rows++;
+                names.add(rs.getString(1));
             }
         }
-        return rows;
+        return names;
     }
 
     private void executeAllBatches(PreparedStatement psPlayer,

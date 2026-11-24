@@ -131,7 +131,7 @@ public class ObjectDbDao implements BenchmarkDao {
     }
 
     @Override
-    public int searchLegendaryOwners(String requester) {
+    public List<String> searchLegendaryOwners(String requester) {
         em.clear();
         String jpql = """
                 SELECT DISTINCT p.playername FROM Player p JOIN p.teams t JOIN t.members m
@@ -139,12 +139,11 @@ public class ObjectDbDao implements BenchmarkDao {
                 """;
         return em.createQuery(jpql, String.class)
                 .setParameter("requester", requester)
-                .getResultList()
-                .size();
+                .getResultList();
     }
 
     @Override
-    public int searchActiveLegendaryOfType(String requester, String type) {
+    public List<String> searchActiveLegendaryOfType(String requester, String type) {
         em.clear();
         String jpql = """
                 SELECT DISTINCT p.playername FROM Player p JOIN p.currentTeam ct JOIN ct.members m
@@ -153,8 +152,7 @@ public class ObjectDbDao implements BenchmarkDao {
         return em.createQuery(jpql, String.class)
                 .setParameter("type", type)
                 .setParameter("requester", requester)
-                .getResultList()
-                .size();
+                .getResultList();
     }
 
     @Override

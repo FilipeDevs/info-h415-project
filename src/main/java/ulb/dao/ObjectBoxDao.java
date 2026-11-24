@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -188,32 +189,32 @@ public class ObjectBoxDao implements BenchmarkDao {
     }
 
     @Override
-    public int searchLegendaryOwners(String requester) {
+    public List<String> searchLegendaryOwners(String requester) {
         store.closeThreadResources();
 
         QueryBuilder<Player> qb = otherPlayers(requester);
         qb.link(Player_.teams).link(Team_.members).equal(Pokemon_.legendary, true);
-        return countNames(qb.build());
+        return findNames(qb.build());
     }
 
     @Override
-    public int searchActiveLegendaryOfType(String requester, String type) {
+    public List<String> searchActiveLegendaryOfType(String requester, String type) {
         store.closeThreadResources();
 
         QueryBuilder<Player> qb = otherPlayers(requester);
         qb.link(Player_.currentTeam).link(Team_.members)
                 .equal(Pokemon_.legendary, true)
                 .equal(Pokemon_.type1, type, StringOrder.CASE_SENSITIVE);
-        return countNames(qb.build());
+        return findNames(qb.build());
     }
 
     private QueryBuilder<Player> otherPlayers(String requester) {
         return playerBox.query().notEqual(Player_.playername, requester, StringOrder.CASE_SENSITIVE);
     }
 
-    private int countNames(Query<Player> query) {
+    private List<String> findNames(Query<Player> query) {
         try {
-            return query.property(Player_.playername).findStrings().length;
+            return Arrays.asList(query.property(Player_.playername).findStrings());
         } finally {
             query.close();
         }

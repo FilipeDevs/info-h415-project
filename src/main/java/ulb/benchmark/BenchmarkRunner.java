@@ -90,7 +90,7 @@ public class BenchmarkRunner {
         List<Integer> counts = new ArrayList<>();
         double average = runTimedBenchmark(operation, systemName, datasetSize, i -> {
             String requester = dataset.get(random.nextInt(dataset.size())).getPlayername();
-            counts.add(query.run(requester));
+            counts.add(query.run(requester).size());
         });
         System.out.printf("--> %s results per run for %s : %s%n", operation, systemName, counts);
         return average;
@@ -134,6 +134,6 @@ public class BenchmarkRunner {
 
     @FunctionalInterface
     private interface SearchQuery {
-        int run(String requester) throws Exception;
+        List<String> run(String requester) throws Exception;
     }
 }
