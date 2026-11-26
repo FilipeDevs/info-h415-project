@@ -541,6 +541,7 @@ nested structure, so storing it means decomposing it across several tables and
 reassembling it with joins on every read.
 
 \section{Use Cases and Domain Modeling}
+\label{sec:usecases}
 
 \subsection{Description of the application domain}
 The application domain selected for this benchmark is inspired by a multiplayer online role-playing game (RPG) system modeled after the Pokemon franchise. In this context, persistent storage must support two distinct categories of data:
@@ -592,6 +593,7 @@ ObjectBox implements a standalone object-oriented storage system, optimized for 
 \end{itemize}
 
 \subsection{Software architecture}
+\label{subsec:architecture}
 The system architecture is engineered to provide a strictly fair and reproducible evaluation across the benchmarked database systems. It decouples dataset generation, object model management, and database execution through modular design patterns.
 
 \subsubsection{Architectural Overview}
@@ -612,6 +614,7 @@ The software adopts a multi-level architecture, structured around three key laye
 \end{itemize}
 
 \subsection{Dataset generation}
+\label{subsec:dataset}
 To evaluate scalability under realistic database workloads while adhering to rigorous benchmarking practices, a hybrid data generation strategy was implemented.
 
 \subsubsection{Authentic Reference Datasets}
@@ -633,9 +636,293 @@ For each generated player profile:
 \end{enumerate}
 
 \section{Experimentation and Benchmarking Protocol}
+\label{sec:protocol}
+This section describes how the measurements reported in Table~\ref{tab:benchmark_results} were obtained: the hardware and software environment, the way each operation is timed, and the exact semantics of the five evaluated operations. The goal of the protocol is that every difference observed between PostgreSQL, ObjectDB and ObjectBox can be attributed to the database system itself rather than to the workload, the data, or the measurement procedure.
+
 \subsection{Benchmark environment}
+\label{subsec:environment}
+
+All benchmarks were executed on a single workstation, in a single run of the benchmarking application (\texttt{ulb.Main}) launched through Maven (\texttt{mvn clean compile exec:java}). The three systems were therefore measured on the same hardware, under the same operating system and inside the same Java Virtual Machine process. Table~\ref{tab:environment} summarizes the environment.
+
+\begin{table}[H]
+  \centering
+  \small
+  \begin{tabularx}{\textwidth}{>{\bfseries}p{4.2cm} L}
+    \toprule
+    \textbf{Component}         & \textbf{Configuration}                                                                                     \\
+    \midrule
+    Processor                  & \textcolor{red}{[TODO: CPU model, cores/threads, base frequency]}                                          \\
+    Main memory                & \textcolor{red}{[TODO: RAM capacity]}                                                                      \\
+    Storage                    & \textcolor{red}{[TODO: SSD model / interface (e.g.\ NVMe)]}                                                \\
+    Operating system           & Microsoft Windows \textcolor{red}{[TODO: version]}                                                         \\
+    Java runtime               & JDK 25 (bytecode target \texttt{maven.compiler.release = 25}), build with Apache Maven                     \\
+    \addlinespace[3pt]
+    PostgreSQL                 & Official \texttt{postgres} Docker image, server version \textcolor{red}{[TODO]}, default configuration \\
+    JDBC driver                & PostgreSQL JDBC (\texttt{org.postgresql:postgresql}) 42.7.10                                               \\
+    ObjectDB                   & ObjectDB 2.8.9, embedded mode, free (evaluation) edition                                                   \\
+    ObjectBox                  & ObjectBox Java 3.8.0 (native Windows library \texttt{objectbox-windows} 3.8.0)                             \\
+    JSON library               & Gson 2.10.1 (dataset (de)serialization)                                                                    \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Hardware and software environment of the benchmark.}
+  \label{tab:environment}
+\end{table}
+
+\paragraph{Deployment of each system.} The three systems are deployed in the way they are meant to be used in practice, which is also the main architectural difference between them (Table~\ref{tab:deployment}). PostgreSQL runs as a separate server process inside a Docker container and is reached by the benchmark through a TCP connection on the loopback interface. ObjectDB and ObjectBox are embedded: they run inside the benchmark's own process and write directly to a local file or directory. As a consequence, the PostgreSQL measurements include the cost of the client-server round-trip, whereas the embedded systems pay no communication cost at all. This is not a bias of the protocol but one of the properties under study: an application using PostgreSQL pays this cost too.
+
+\begin{table}[H]
+  \centering
+  \small
+  \begin{tabularx}{\textwidth}{>{\RaggedRight\bfseries}p{3.0cm} L L L}
+    \toprule
+    \textbf{Setting}        & \textbf{PostgreSQL}                                                      & \textbf{ObjectDB}                                                     & \textbf{ObjectBox}                                                          \\
+    \midrule
+    Deployment              & Client-server (Docker container, TCP on \texttt{localhost})              & Embedded in the JVM                                                   & Embedded, native C/C++ core via JNI                                         \\
+    \addlinespace[3pt]
+    Storage                 & Database \texttt{pokemon\_db} inside the container                       & Single local \texttt{.odb} file                                       & Local database directory, maximum size 30\,GB                               \\
+    \addlinespace[3pt]
+    Schema                  & Created beforehand by \texttt{scripts/create\_schema.sql}                & Derived from the JPA annotations                                      & Generated at compile time (model file \texttt{default.json})                \\
+    \addlinespace[3pt]
+    Access API              & JDBC, \texttt{autoCommit = false}                                        & JPA \texttt{EntityManager}                                            & Native \texttt{Box} / \texttt{QueryBuilder} API                              \\
+    \addlinespace[3pt]
+    Reset between runs      & \texttt{TRUNCATE \dots\ CASCADE} on the four player tables              & Database file deleted and reopened                                    & \texttt{removeAll()} on every box in one transaction                         \\
+    \addlinespace[3pt]
+    Reference data          & \texttt{pokemons} and \texttt{items} tables seeded once from the CSV files & Embedded in each player graph (\texttt{@Embeddable})                 & Stored as \texttt{Pokemon} / \texttt{Item} objects inside each player graph \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Deployment and configuration of the three database systems.}
+  \label{tab:deployment}
+\end{table}
+
+\paragraph{Isolation between systems.} For each dataset size, the systems are benchmarked one after the other, never concurrently, in the fixed order PostgreSQL, ObjectDB, ObjectBox. Each system is opened in its own \texttt{try-with-resources} block, so its connection, \texttt{EntityManagerFactory} or \texttt{BoxStore} is closed before the next system starts. Between two systems, and between two benchmark phases of the same system, the runner explicitly requests a garbage collection (\texttt{System.gc()}) followed by a $150$\,ms pause, so that objects allocated by a previous phase are less likely to trigger a garbage collection inside a timed section.
+
 \subsection{Measurement methodology}
+\label{subsec:methodology}
+
+\subsubsection{Execution workflow}
+Figure~\ref{fig:workflow} shows the sequence executed by \texttt{BenchmarkRunner} for every dataset size $N \in \{1\text{K}, 10\text{K}, 100\text{K}, 1\text{M}\}$ and every system. The insertion benchmark always comes first, since it populates the database used by all the following operations. The statistics refresh (\texttt{refreshStatistics()}, an \texttt{ANALYZE} for PostgreSQL and a no-op for the two object databases) is executed once, outside any timed section. The read-only operations follow, and the update benchmark comes last so that it cannot change the data seen by the reads.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+      node distance=4mm and 3mm,
+      phase/.style={draw, rounded corners=2pt, fill=blue!6, minimum height=9mm, align=center, font=\footnotesize, text width=2.05cm},
+      untimed/.style={draw, dashed, rounded corners=2pt, fill=gray!10, minimum height=9mm, align=center, font=\footnotesize, text width=2.05cm},
+      arr/.style={-{Stealth[length=2mm]}, thick}
+    ]
+    \node[untimed] (load) {Load JSON dataset};
+    \node[untimed, right=of load] (init) {\texttt{init()} open DB};
+    \node[phase, right=of init] (ins) {INSERT\\$6$ runs};
+    \node[untimed, right=of ins] (stat) {Refresh statistics};
+    \node[phase, right=of stat] (get) {GET\\$6$ runs};
+    \node[phase, below=9mm of get] (leg) {SEARCH\_LEG\\$6$ runs};
+    \node[phase, left=of leg] (act) {SEARCH\_ACT\\$6$ runs};
+    \node[phase, left=of act] (upd) {UPDATE\\$6$ runs};
+    \node[untimed, left=of upd] (close) {\texttt{close()}};
+    \node[untimed, left=of close] (gc) {GC, next system};
+
+    \draw[arr] (load) -- (init);
+    \draw[arr] (init) -- (ins);
+    \draw[arr] (ins) -- (stat);
+    \draw[arr] (stat) -- (get);
+    \draw[arr] (get) -- (leg);
+    \draw[arr] (leg) -- (act);
+    \draw[arr] (act) -- (upd);
+    \draw[arr] (upd) -- (close);
+    \draw[arr] (close) -- (gc);
+
+    \node[phase, below=10mm of gc, text width=0.9cm, minimum height=5mm] (lt) {};
+    \node[right=1mm of lt, font=\footnotesize] (ltt) {timed phase (run 1 = warm-up, runs 2--6 averaged)};
+    \node[untimed, right=4mm of ltt, text width=0.9cm, minimum height=5mm] (lu) {};
+    \node[right=1mm of lu, font=\footnotesize] {not timed};
+  \end{tikzpicture}
+  \caption{Benchmark workflow executed for each system and each dataset size. A garbage collection is requested between consecutive timed phases.}
+  \label{fig:workflow}
+\end{figure}
+
+\subsubsection{Timing}
+Execution time is measured with \texttt{System.nanoTime()}, the monotonic high-resolution clock of the JVM, and converted to milliseconds. The timed section contains only the call to the corresponding \texttt{BenchmarkDao} method, so it includes everything the database system needs to complete the operation, up to and including the transaction commit for writes. The following steps are deliberately left outside the timed section:
+\begin{itemize}
+  \item reading and deserializing the JSON dataset into Java objects;
+  \item emptying the database before each insertion run (\texttt{clearDatabase()});
+  \item opening and closing the database, and the statistics refresh.
+\end{itemize}
+For the insertion benchmark, the timed section does include the conversion of the in-memory player objects into the representation expected by each system: binding parameters into JDBC batches for PostgreSQL, and building the \texttt{ToOne}/\texttt{ToMany} entity graph for ObjectBox. This work is part of what an application has to do in order to persist its objects, and it is precisely where the object-relational impedance mismatch shows up.
+
+\subsubsection{Warm-up and repetitions}
+Every operation is executed $R = 6$ times. The first execution is a warm-up run: it is printed but discarded, because it absorbs one-off costs that do not reflect the steady state of the system, such as JVM class loading and Just-In-Time compilation, preparation of the first SQL statements, allocation of the database files and the initial filling of the page caches. The reported value is the arithmetic mean of the five remaining runs:
+\begin{equation}
+  \bar{t}_{\,op}(N) = \frac{1}{5} \sum_{r=2}^{6} t_{op,r}(N)
+  \label{eq:mean}
+\end{equation}
+where $t_{op,r}(N)$ is the duration of run $r$ of operation $op$ on a database of $N$ players. For the insertion benchmark, each run starts from an empty database and inserts the complete dataset again, from a fresh copy deserialized from the JSON file, so that no object state left over from a previous run (identifiers assigned by an object database, managed JPA instances, etc.) can be reused.
+
+\subsubsection{Cache control and determinism}
+Two measures make the read measurements comparable and reproducible:
+\begin{itemize}
+  \item \textbf{Bypassing session caches.} Before each read, the object databases are forced to go back to their storage: ObjectDB clears its persistence context (\texttt{em.clear()}) and ObjectBox releases the thread's read resources (\texttt{store.closeThreadResources()}), as described in Section~\ref{subsec:architecture}. Without this, a repeated lookup would return an object already in memory and the benchmark would measure a Java map access instead of a database read. The operating system page cache and PostgreSQL's shared buffers are not flushed: all three systems are measured with a warm storage cache, which corresponds to the steady state of a running game server.
+  \item \textbf{Identical targets.} The players targeted by \texttt{GET}, \texttt{UPDATE} and the searches are drawn with a pseudo-random generator (\texttt{Random}) initialized with the same seed as the dataset generator (\texttt{12345L}). Each system therefore reads and modifies exactly the same players, in the same order. For the searches, the requesting player changes at every run, which also prevents ObjectDB from answering a repeated query from its query result cache.
+\end{itemize}
+
+\subsubsection{Workload size}
+Table~\ref{tab:workload} gives the expected size of one player graph, derived from the uniform distributions used by the generator (Section~\ref{subsec:dataset}): $1$ to $10$ teams per player, $1$ to $6$ Pokemon per team and $1$ to $10$ inventory entries. The same player graph is stored very differently by each system. PostgreSQL decomposes it into rows of four tables, ObjectDB stores only the \texttt{Player} and \texttt{Team} entities (Pokemon and items being embedded values), and ObjectBox stores every node of the graph as a separate object, including one copy of each Pokemon and item per player.
+
+\begin{table}[H]
+  \centering
+  \small
+  \begin{tabular}{lrrr}
+    \toprule
+    \textbf{Element of one player graph} & \textbf{Distribution} & \textbf{Expected value} \\
+    \midrule
+    Teams per player                     & $\mathcal{U}\{1,10\}$ & $5.5$                   \\
+    Pokemon per team                     & $\mathcal{U}\{1,6\}$  & $3.5$                   \\
+    Team members per player              & --                    & $5.5 \times 3.5 = 19.25$ \\
+    Inventory entries per player         & $\mathcal{U}\{1,10\}$ & $5.5$                   \\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{4mm}
+
+  \begin{tabular}{lrrrr}
+    \toprule
+    \textbf{Stored records}                                                     & \textbf{1K}   & \textbf{10K} & \textbf{100K} & \textbf{1M}  \\
+    \midrule
+    PostgreSQL rows ($1 + 5.5 + 19.25 + 5.5 = 31.25$ per player)                & 31\,250       & 312\,500     & 3.13\,M       & 31.25\,M     \\
+    ObjectDB entity instances ($1 + 5.5 = 6.5$ per player)                      & 6\,500        & 65\,000      & 0.65\,M       & 6.5\,M       \\
+    ObjectBox objects ($1 + 5.5 + 19.25 + 5.5 + 5.5 = 36.75$ per player)        & 36\,750       & 367\,500     & 3.68\,M       & 36.75\,M     \\
+    \bottomrule
+  \end{tabular}
+  \caption{Expected size of one generated player graph (top) and resulting number of stored records per system (bottom). Static reference tables are not counted.}
+  \label{tab:workload}
+\end{table}
+
+Figure~\ref{fig:records_per_player} shows the same decomposition for one average player. It explains two observations made in the results: ObjectDB writes far fewer records than the other two systems, and the $1$M-player dataset represents $6.5$ million ObjectDB entities, above the limit of the free edition.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+        xbar stacked,
+        width=0.85\textwidth,
+        height=4.6cm,
+        bar width=11pt,
+        xmin=0, xmax=42,
+        xlabel={Expected stored records per player},
+        symbolic y coords={ObjectBox, ObjectDB, PostgreSQL},
+        ytick=data,
+        y dir=reverse,
+        enlarge y limits=0.3,
+        legend style={at={(0.5,-0.42)}, anchor=north, legend columns=-1, font=\footnotesize, draw=none},
+        major grid style={draw=gray!25},
+        xmajorgrids=true,
+        every axis plot/.append style={draw=black!60, line width=0.3pt}
+      ]
+      \addplot[fill=blue!55] coordinates {(1,PostgreSQL) (1,ObjectDB) (1,ObjectBox)};
+      \addlegendentry{Player}
+      \addplot[fill=teal!55] coordinates {(5.5,PostgreSQL) (5.5,ObjectDB) (5.5,ObjectBox)};
+      \addlegendentry{Team}
+      \addplot[fill=orange!65] coordinates {(19.25,PostgreSQL) (0,ObjectDB) (19.25,ObjectBox)};
+      \addlegendentry{Team member / Pokemon}
+      \addplot[fill=violet!45] coordinates {(5.5,PostgreSQL) (0,ObjectDB) (5.5,ObjectBox)};
+      \addlegendentry{Inventory entry}
+      \addplot[fill=gray!40] coordinates {(0,PostgreSQL) (0,ObjectDB) (5.5,ObjectBox)};
+      \addlegendentry{Item}
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Expected number of records written for one player, by system. In ObjectDB, team members and inventory entries are embedded inside the \texttt{Team} and \texttt{Player} entities and are not separate records.}
+  \label{fig:records_per_player}
+\end{figure}
+
+\subsubsection{Failure handling}
+A benchmark phase is aborted as soon as one of its runs throws an exception, and the corresponding cells are reported as \emph{N/A} in Table~\ref{tab:benchmark_results}. Two such failures occurred, both at $N = 1$M:
+\begin{itemize}
+  \item \textbf{ObjectDB} failed during the warm-up insertion run, when the number of stored entities exceeded the $1\,000\,000$-instance limit of the free edition.
+  \item \textbf{ObjectBox} completed the warm-up insertion, but the reset before Run~2 failed with storage error \texttt{-30788}: deleting tens of millions of objects inside a single \texttt{removeAll()} transaction exceeded what the storage engine accepts in one transaction.
+\end{itemize}
+No partial result is used for these two cases, so the comparison at $1$M players only contains PostgreSQL.
+
 \subsection{Evaluated operations}
+\label{subsec:operations}
+
+The benchmark evaluates five operations that correspond to the use cases of the RPG domain described in Section~\ref{sec:usecases}: creating the player base, loading a profile, modifying it, and searching across all players for matchmaking. Table~\ref{tab:operations} summarizes them.
+
+\begin{table}[H]
+  \centering
+  \small
+  \begin{tabularx}{\textwidth}{>{\ttfamily}p{2.1cm} L >{\centering\arraybackslash}p{1.6cm} >{\centering\arraybackslash}p{1.9cm}}
+    \toprule
+    \textrm{\textbf{Operation}} & \textbf{What is measured (one run)}                                                                                                   & \textbf{Access}  & \textbf{Data touched} \\
+    \midrule
+    INSERT                      & Persist the complete dataset of $N$ player graphs in an empty database, in one transaction, including the commit.                     & Write (bulk)     & Whole dataset         \\
+    \addlinespace[3pt]
+    GET                         & Find one player by its name and load its complete graph: all teams with their members and all inventory entries with their item.      & Read (point)     & One graph             \\
+    \addlinespace[3pt]
+    UPDATE                      & Change the quantity of one item in one player's inventory and commit the transaction.                                                 & Write (point)    & One record            \\
+    \addlinespace[3pt]
+    SEARCH\_LEG                 & Return the names of all other players who own a legendary Pokemon in \emph{any} of their teams.                                       & Read (scan)      & All players           \\
+    \addlinespace[3pt]
+    SEARCH\_ACT                 & Return the names of all other players whose \emph{active} team contains a legendary Pokemon of primary type \texttt{Dragon}.         & Read (scan)      & All players           \\
+    \bottomrule
+  \end{tabularx}
+  \caption{The five evaluated operations.}
+  \label{tab:operations}
+\end{table}
+
+\paragraph{INSERT.} Insertion measures how fast each system can persist a population of complex objects. Each run inserts all $N$ players and their sub-objects in a single transaction. PostgreSQL sends them as JDBC batches executed every $5\,000$ players (five prepared statements: players, teams, team members, the \texttt{UPDATE} that sets \texttt{current\_team} once the team exists, and inventory entries); ObjectDB persists each \texttt{Player} and relies on cascading persistence by reachability, flushing and clearing its persistence context every $5\,000$ players; ObjectBox converts the graph to its entity model and stores it with a single \texttt{put()} inside \texttt{runInTx()}.
+
+\paragraph{GET.} Point retrieval measures the cost of reconstructing one complete object graph from storage, the most frequent operation of a game server (loading a profile at login). To make sure that the graph is really loaded and not only a lazy proxy, every implementation walks through all teams, team members and inventory items and returns the number of loaded objects; the run fails if this number is zero.
+
+\paragraph{UPDATE.} The update modifies a single scalar inside a nested collection: the quantity of the first item of the target player's inventory is set to $100 + r$, where $r$ is the run number, so that every run actually writes a new value. In PostgreSQL this is one \texttt{UPDATE} on \texttt{item\_player}; in the object databases, the player is loaded, the inventory entry is modified in memory and the change is committed (dirty checking in ObjectDB, explicit \texttt{put()} of the \texttt{InventoryEntry} in ObjectBox).
+
+\paragraph{SEARCH\_LEG and SEARCH\_ACT.} The two multi-criteria searches model matchmaking: unlike \texttt{GET} and \texttt{UPDATE}, they cannot start from a known player and must examine the graph of every player in the database. They differ in the path they follow through the graph. \texttt{SEARCH\_LEG} follows \texttt{Player} $\rightarrow$ \texttt{teams} $\rightarrow$ \texttt{members} and is very unselective, while \texttt{SEARCH\_ACT} follows the single-valued \texttt{currentTeam} reference and combines two conditions on the Pokemon, which makes it very selective. Listing~\ref{lst:search_act} shows how the same \texttt{SEARCH\_ACT} query is written for each system: a correlated \texttt{EXISTS} subquery joining two tables in SQL, path navigation in JPQL, and chained \texttt{link()} calls on the generated metadata classes in ObjectBox.
+
+\begin{lstlisting}[language=SQL, caption={\texttt{SEARCH\_ACT} in PostgreSQL (SQL), ObjectDB (JPQL) and ObjectBox (Java query builder).}, label={lst:search_act}]
+-- PostgreSQL
+SELECT p.playername FROM players p
+WHERE p.playername <> ?
+  AND EXISTS (SELECT 1 FROM team_members tm JOIN pokemons pk ON pk.id = tm.pokemon_id
+              WHERE tm.playername = p.playername AND tm.team_name = p.current_team
+                AND pk.legendary AND pk.type1 = ?)
+
+-- ObjectDB
+SELECT DISTINCT p.playername FROM Player p JOIN p.currentTeam ct JOIN ct.members m
+WHERE m.legendary = true AND m.type1 = :type AND p.playername <> :requester
+
+// ObjectBox
+playerBox.query().notEqual(Player_.playername, requester, CASE_SENSITIVE)
+    .link(Player_.currentTeam).link(Team_.members)
+    .equal(Pokemon_.legendary, true).equal(Pokemon_.type1, type, CASE_SENSITIVE)
+\end{lstlisting}
+
+The number of players returned by these searches grows linearly with $N$, so their cost includes both finding and returning the matching players. Their expected selectivity can be derived from the reference data and the generator: $65$ of the $800$ Pokemon are legendary, and $12$ of them are legendary with primary type \texttt{Dragon}. Since a team of $m$ members is a sample without replacement of the $800$ Pokemon, the probability that it contains none of $k$ given Pokemon is $\binom{800-k}{m}/\binom{800}{m}$. Averaging over $m \sim \mathcal{U}\{1,6\}$ and over the number of teams gives the expected fractions of matching players in Table~\ref{tab:selectivity}.
+
+\begin{table}[H]
+  \centering
+  \small
+  \begin{tabular}{lrrrrr}
+    \toprule
+    \textbf{Operation} & \textbf{Matching fraction} & \textbf{1K} & \textbf{10K} & \textbf{100K} & \textbf{1M} \\
+    \midrule
+    \texttt{SEARCH\_LEG} & $\approx 71.6\,\%$ & $\approx 716$ & $\approx 7\,160$ & $\approx 71\,600$ & $\approx 716\,000$ \\
+    \texttt{SEARCH\_ACT} & $\approx 5.1\,\%$  & $\approx 51$  & $\approx 513$    & $\approx 5\,130$  & $\approx 51\,300$  \\
+    \bottomrule
+  \end{tabular}
+  \caption{Expected number of players returned by the two searches (the requesting player is excluded).}
+  \label{tab:selectivity}
+\end{table}
+
+The two searches thus bracket the typical behaviour of a filter: \texttt{SEARCH\_LEG} returns most of the player base and is dominated by the cost of traversing and returning results, whereas \texttt{SEARCH\_ACT} returns a small subset and is dominated by the cost of evaluating the predicate over the whole population.
+
+\subsection{Threats to validity}
+\label{subsec:validity}
+The protocol has limitations that must be kept in mind when interpreting the results.
+\begin{itemize}
+  \item \textbf{Number of repetitions.} Each point operation is measured on five single executions. The means are therefore sensitive to individual outliers (for example a garbage collection or an operating system interruption during one run) and no confidence interval is reported. Differences of a few hundredths of a millisecond between systems should not be over-interpreted.
+  \item \textbf{Single machine, single client.} All results come from one workstation and a single-threaded client. They say nothing about behaviour under concurrent access, where the multi-user design of PostgreSQL is expected to matter much more than here.
+  \item \textbf{Containerized PostgreSQL.} Running PostgreSQL in Docker on Windows adds a virtualization layer and a virtual network between client and server. This increases the fixed cost of each round-trip compared to a native installation, and mostly affects the sub-millisecond operations (\texttt{GET}, \texttt{UPDATE}).
+  \item \textbf{Default configurations.} All systems are used with their default durability and memory settings, without tuning. A tuned PostgreSQL (e.g.\ larger \texttt{shared\_buffers}, \texttt{COPY} instead of batched \texttt{INSERT}) or a different commit policy would change the absolute numbers.
+  \item \textbf{Different physical models.} As shown in Table~\ref{tab:workload}, the three systems do not store the same number of records for the same player. This is inherent to the modeling choices of each paradigm, and is part of what the benchmark compares, but it means that results reflect the combination of a system \emph{and} the data model chosen for it.
+\end{itemize}
 
 \section{Results and Comparative Analysis}
 
