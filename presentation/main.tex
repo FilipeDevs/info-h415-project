@@ -2,60 +2,156 @@
 \input{FrontMatter/preamble.tex}
 \usetheme{ULB}
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FOOTLINE MANAGEMENT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 \setcounter{FootlineChoice}{1}
-% Please select value 0,1, or 2 for the footline alignment.
-% All footlines display the [author] in SW corner and [institute] in SE corner,
-% but you can choose between the following options for the center of the footline :
-
-% Footline Aligment 0 : 
-%       Only the current section is displayed. All is aligned with the very bottom of the frame.
-
-% Footline Aligment 1 :
-%       Only the current section is displayed. All is aligned a bit higher to escape potential crops when projecting.
-
-% Footline Aligment 2 : 
-%       Current section and subsection are displayed.  All is aligned a bit higher to escape potential crops when projecting.
-
-% Footline Alignment 3 :
-%       Nothing displayed at center. [author] and [institute] aligned with very bottom of frame.
 
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MAIN BODY OF PRESENTATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-\title{Advenced Databases\\Object-oriented databases with ObjectDB and ObjectBox}
+\title{Advenced Databases\\Object-oriented databases with ObjectDB
+and ObjectBox}
 \date{14 December 2026}
 \author[]{
-		Amine Ayadi\\
-		Martin Gouverneur\\
-		Filipe Pereira Martins\\
-		Ethan Van Ruyskensvelde\\}
-\institute[INFO-H415]
+    Amine Ayadi\texorpdfstring{\\}{, }
+    Martin Gouverneur\texorpdfstring{\\}{, }
+    Filipe Pereira Martins\texorpdfstring{\\}{, }
+    Ethan Van Ruyskensvelde
+}
+\institute[]
 {
-  Université Libre de Bruxelles
+    Université Libre de Bruxelles
 }
 
 
 \begin{document}
 
 \begin{frame}[plain,noframenumbering]
-\titlepage
+    \titlepage
 \end{frame}
 
-\begin{frame}{Slide Title}
-Content
+\begin{frame}{Introduction}
+    \begin{block}{Context \& Motivation}
+        Modern software is built around \textbf{object-oriented models}, yet persistent storage still relies mostly on \textbf{relational table}, forcing continuous translation between two paradigms.
+    \end{block}
+
+    \vspace{0.5em}
+    \begin{itemize}
+        \item \textbf{Project Goal:} Evaluate whether \textbf{Object-Oriented Databases (OODBMS)} are the technology of choice for graph-heavy applications compared to a relational baseline (\textbf{PostgreSQL}).
+        \item     \textbf{Studied OODBMS:} \textbf{ObjectDB} and \textbf{ObjectBox}.
+
+    \end{itemize}
 \end{frame}
 
-\begin{frame}{Side 2}
-Other things
+\begin{frame}
+    \vfill
+    \begin{center}
+        {\usebeamercolor[fg]{title}\LARGE \textbf{Introduction to Object-Oriented Databases}}\\[0.8em]
+    \end{center}
+    \vfill
+\end{frame}
+
+\begin{frame}{Origins and motivation}
+\end{frame}
+
+\begin{frame}{Fundamental Principles of OODBMS}
+\end{frame}
+
+\begin{frame}{Standards and norms}
+\end{frame}
+
+\begin{frame}{Relational Model vs. Object-Oriented Model}
+\end{frame}
+
+\begin{frame}
+    \vfill
+    \begin{center}
+        {\usebeamercolor[fg]{title}\LARGE \textbf{Introduction to ObjectDB and ObjectBox}}\\[0.8em]
+    \end{center}
+    \vfill
+\end{frame}
+
+\begin{frame}{ObjectDB}
+\end{frame}
+
+\begin{frame}{ObjectBox}
+\end{frame}
+
+\begin{frame}{PostgreSQL (Baseline)}
+\end{frame}
+
+\begin{frame}
+    \vfill
+    \begin{center}
+        {\usebeamercolor[fg]{title}\LARGE \textbf{Application Benchmark \\ \& \\
+        \vspace{0.2em} Comparative Analysis}}\\[0.8em]
+    \end{center}
+    \vfill
+\end{frame}
+
+\begin{frame}{Application domain}
+    \textbf{Context:} Role-playing game (RPG) modeled after the \textit{Pokémon} game.
+    \vspace{0.4em}
+
+    \begin{block}{Two Distinct Categories of Data}
+        \begin{itemize}
+            \item \textbf{Static reference data:} Immutable Pokémon entities (name, type, speed\dots) and item definitions (name, description).
+            \item \textbf{Dynamic player state:} Mutable account credentials, active and customized teams, and inventory.
+        \end{itemize}
+    \end{block}
+
+    \vspace{0.4em}
+    \textbf{Why an ideal case study (OODBMS vs. RDBMS)?}
+    \begin{itemize}
+        \item \textbf{Structural complexity:} Nested variable-length collections (team lists, item-quantity associations), object composition, and complex entity references.
+        \item \textbf{Mixed workloads:} Single-profile reads/updates alongside cross-player global searches (e.g., matchmaking inspecting all teams for legendary Pokémon).
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Conceptual schema and data models}
+\end{frame}
+
+\begin{frame}{Software architecture}
+\end{frame}
+
+\begin{frame}{Dataset generation}
+    \small
+    \begin{block}{\normalsize Authentic Reference Datasets (\textit{Kaggle})}
+        \begin{itemize}
+            \item \texttt{\href{https://www.kaggle.com/datasets/mlomuscio/pokemon}{pokemons.csv}}: 800 Pokémon with full stats (\texttt{HP}, \texttt{Attack}, \texttt{Defense}, \texttt{Sp. Atk}, \texttt{Sp. Def}, \texttt{Speed}, \texttt{Generation}, \texttt{Legendary}).
+            \item \texttt{\href{https://www.kaggle.com/datasets/mylesoneill/pokemon-sun-and-moon-gen-7-stats?select=items.csv}{items.csv}}: 920 game items with names and descriptions.
+        \end{itemize}
+    \end{block}
+
+    \begin{block}{\normalsize Deterministic Workload Generator (\texttt{DatasetGenerator.java})}
+        \textbf{Scale:} $1\text{K}$, $10\text{K}$, $100\text{K}$, and $1\text{M}$ players \hfill \textbf{Reproducibility:} Fixed \texttt{SEED = 12345L}
+        \begin{itemize}
+            \item \textbf{Identity:} Unique \texttt{Player\_i} ($i \in \{1, \dots, N\}$) + deterministic \texttt{password\_hash}.
+            \item \textbf{Collection:} $1$ to $10$ distinct Pokémon (sampled without replacement).
+            \item \textbf{Teams:} $1$ to $10$ custom teams ($1$–$6$ slots from owned Pokémon).
+            \item \textbf{Inventory:} $1$ to $10$ distinct items (quantities from $1$ to $10$).
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\begin{frame}{Experimentation and benchmarking protocol}
+\end{frame}
+
+\begin{frame}{Result and comparative analysis}
+\end{frame}
+
+\begin{frame}{Overall Assessment: Pro and Cons}
+\end{frame}
+
+\begin{frame}{Conclusion}
+    \begin{itemize}
+        \item Eliminating object-relational impedance mismatch yields
+            substantial performance gains for graph-oriented workloads.
+        \item \textbf{ObjectDB:} Best write throughput.
+        \item \textbf{ObjectBox:} Fastest point reads.
+        \item \textbf{PostgreSQL:} Essential when shared SQL access or $>1\text{M}$ players without licensing costs is required.
+    \end{itemize}
+    \vspace{1em}
+    \begin{center}
+        \textbf{Object-oriented databases prove to be the technology of
+        choice for our RPG application domain.}
+    \end{center}
 \end{frame}
 
 \end{document}
