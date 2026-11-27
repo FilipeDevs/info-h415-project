@@ -339,7 +339,7 @@ public class Player {
 \begin{lstlisting}[language=Java]
 em.getTransaction().begin();
 em.persist(player);                                 // store a new object
-Player found = em.find(Player.class, "Player_67");  // read one back
+Player found = em.find(Player.class, "Player_12");  // read one back
 found.setPasswordHash(newHash);                     // no save call needed
 em.getTransaction().commit();
 \end{lstlisting}
@@ -454,7 +454,7 @@ database the way JPQL can.
 
 \begin{lstlisting}[language=Java]
 Query<Player> query = playerBox
-        .query(Player_.playername.equal("Player_67"))
+        .query(Player_.playername.equal("Player_12"))
         .build();
 Player player = query.findFirst();
 \end{lstlisting}
