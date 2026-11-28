@@ -45,10 +45,11 @@ public class DatasetGenerator {
 
             for (int size : sizes) {
                 System.out.printf("Generating %d players...%n", size);
-                long startTime = System.currentTimeMillis();
+                long startTime = System.nanoTime();
                 generatePlayersDataset("datasets/players_" + size + ".json", size, pokemons, items);
-                long duration = (System.currentTimeMillis() - startTime) / 1000;
-                System.out.printf("Dataset of %d players created successfully in %d s !%n", size, duration);
+                double durationMs = (System.nanoTime() - startTime) / 1_000_000.0;
+                System.out.printf("Dataset of %d players created successfully in %.2f ms (%.2f s)!%n", size, durationMs,
+                        durationMs / 1000.0);
             }
         } catch (IOException e) {
             System.err.println("Error while generating datasets: " + e.getMessage());
