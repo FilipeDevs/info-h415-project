@@ -5,3 +5,5 @@
 - Mettre à jour Figure 3: Benchmark workflow executed for each system and each dataset size. A garbage collection is requested between consecutive timed phases avec delete qui n'est pas encore dedans.
 - Ajouter delete dans la section 5.2.4 : Identical targets
 - Ajouter delete à 5.3 Evaluated operations et à la table5 et en dessous
+- Run sur pc d'Ethan search et delete
+- Mettre à jour dans le rapport toutes les données de benchmark (tableaux et endoits dans le texte où on en parle)

@@ -67,69 +67,74 @@ public class ObjectBoxDao implements BenchmarkDao {
 
     @Override
     public void clearDatabase() throws DaoException {
-        if (store != null) {
-            store.runInTx(() -> {
-                store.boxFor(Player.class).removeAll();
-                store.boxFor(Team.class).removeAll();
-                store.boxFor(Pokemon.class).removeAll();
-                store.boxFor(Item.class).removeAll();
-                store.boxFor(InventoryEntry.class).removeAll();
-            });
+        if (store != null && !store.isClosed()) {
+            store.close();
         }
+        init();
     }
 
     @Override
     public void insertPlayers(List<ulb.object_db_model.Player> players) throws DaoException {
-        List<Player> obxPlayers = new ArrayList<>(players.size());
+        final int batchSize = 5_000;
 
-        for (ulb.object_db_model.Player player : players) {
-            Player obxPlayer = new Player(player.getPlayername(), player.getPasswordHash());
+        store.runInTx(() -> {
+            List<Player> batch = new ArrayList<>(batchSize);
 
-            if (player.getTeams() != null) {
-                for (ulb.object_db_model.Team team : player.getTeams()) {
-                    Team obxTeam = new Team(team.getName());
+            for (ulb.object_db_model.Player player : players) {
+                Player obxPlayer = new Player(player.getPlayername(), player.getPasswordHash());
 
-                    if (team.getMembers() != null) {
-                        for (ulb.object_db_model.Pokemon poke : team.getMembers()) {
-                            Pokemon obxPoke = new Pokemon(
-                                    poke.getName(),
-                                    poke.getType1(),
-                                    poke.getType2(),
-                                    poke.getHp(),
-                                    poke.getAttack(),
-                                    poke.getDefense(),
-                                    poke.getSpAtk(),
-                                    poke.getSpDef(),
-                                    poke.getSpeed(),
-                                    poke.getGeneration(),
-                                    poke.isLegendary());
-                            obxTeam.getMembers().add(obxPoke);
+                if (player.getTeams() != null) {
+                    for (ulb.object_db_model.Team team : player.getTeams()) {
+                        Team obxTeam = new Team(team.getName());
+
+                        if (team.getMembers() != null) {
+                            for (ulb.object_db_model.Pokemon poke : team.getMembers()) {
+                                Pokemon obxPoke = new Pokemon(
+                                        poke.getName(),
+                                        poke.getType1(),
+                                        poke.getType2(),
+                                        poke.getHp(),
+                                        poke.getAttack(),
+                                        poke.getDefense(),
+                                        poke.getSpAtk(),
+                                        poke.getSpDef(),
+                                        poke.getSpeed(),
+                                        poke.getGeneration(),
+                                        poke.isLegendary());
+                                obxTeam.getMembers().add(obxPoke);
+                            }
+                        }
+
+                        obxPlayer.getTeams().add(obxTeam);
+
+                        if (player.getCurrentTeam() != null &&
+                                team.getName().equals(player.getCurrentTeam().getName())) {
+                            obxPlayer.getCurrentTeam().setTarget(obxTeam);
                         }
                     }
+                }
 
-                    obxPlayer.getTeams().add(obxTeam);
-
-                    if (player.getCurrentTeam() != null &&
-                            team.getName().equals(player.getCurrentTeam().getName())) {
-                        obxPlayer.getCurrentTeam().setTarget(obxTeam);
+                if (player.getInventory() != null) {
+                    for (Map.Entry<ulb.object_db_model.Item, Integer> entry : player.getInventory().entrySet()) {
+                        ulb.object_db_model.Item item = entry.getKey();
+                        Item obxItem = new Item(item.getName(), item.getDescription());
+                        InventoryEntry invEntry = new InventoryEntry(obxItem, entry.getValue());
+                        obxPlayer.getInventoryItemsCount().add(invEntry);
                     }
                 }
-            }
 
-            if (player.getInventory() != null) {
-                for (Map.Entry<ulb.object_db_model.Item, Integer> entry : player.getInventory().entrySet()) {
-                    ulb.object_db_model.Item item = entry.getKey();
-                    Item obxItem = new Item(item.getName(), item.getDescription());
-                    InventoryEntry invEntry = new InventoryEntry(obxItem, entry.getValue());
-                    obxPlayer.getInventoryItemsCount().add(invEntry);
+                batch.add(obxPlayer);
+
+                if (batch.size() == batchSize) {
+                    playerBox.put(batch);
+                    batch.clear();
                 }
             }
 
-            obxPlayers.add(obxPlayer);
-        }
-
-        // Transaction d'insertion par lot
-        store.runInTx(() -> playerBox.put(obxPlayers));
+            if (!batch.isEmpty()) {
+                playerBox.put(batch);
+            }
+        });
     }
 
     @Override

@@ -16,8 +16,9 @@ public class BenchmarkRunner {
 
     public double runInsertionBenchmark(BenchmarkDao dao, Supplier<List<Player>> datasetSupplier, String systemName,
             int datasetSize) {
+        String formattedSize = String.format(java.util.Locale.US, "%,d", datasetSize).replace(',', ' ');
         System.out.println("\n==========================================");
-        System.out.printf("Start of the insertion benchmark for [%s] with %d players%n", systemName, datasetSize);
+        System.out.printf("Start of the insertion benchmark for [%s] with %s players%n", systemName, formattedSize);
         System.out.println("==========================================");
 
         List<Double> durations = new ArrayList<>();
@@ -85,7 +86,8 @@ public class BenchmarkRunner {
 
     private double runSearchBenchmark(String operation, List<Player> dataset, String systemName, int datasetSize,
             SearchQuery query) {
-        // A different requester on each run, so ObjectDB cannot answer from its query result cache
+        // A different requester on each run, so ObjectDB cannot answer from its query
+        // result cache
         Random random = new Random(12345L);
         List<Integer> counts = new ArrayList<>();
         double average = runTimedBenchmark(operation, systemName, datasetSize, i -> {
@@ -98,8 +100,9 @@ public class BenchmarkRunner {
 
     private double runTimedBenchmark(String operation, String systemName, int datasetSize, BenchmarkOperation benchmark)
             throws RuntimeException {
+        String formattedSize = String.format(java.util.Locale.US, "%,d", datasetSize).replace(',', ' ');
         System.out.println("\n==========================================");
-        System.out.printf("Start of the %s benchmark for [%s] with %d players%n", operation, systemName, datasetSize);
+        System.out.printf("Start of the %s benchmark for [%s] with %s players%n", operation, systemName, formattedSize);
         System.out.println("==========================================");
 
         List<Double> durations = new ArrayList<>();

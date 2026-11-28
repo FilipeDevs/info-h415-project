@@ -187,8 +187,9 @@ public class Main {
         System.out.println("---------------------------------------------------------------------------");
 
         for (BenchmarkResult res : results) {
-            System.out.printf("%-10s | %-15s | %-12d | %-20.2f%n", res.getOperation(), res.getSystemName(),
-                    res.getDatasetSize(), res.getAverageTimeMs());
+            String formattedSize = String.format(Locale.US, "%,d", res.getDatasetSize()).replace(',', ' ');
+            System.out.printf("%-10s | %-15s | %-12s | %-20.2f%n", res.getOperation(), res.getSystemName(),
+                    formattedSize, res.getAverageTimeMs());
         }
         System.out.println("===========================================================================\n");
     }
