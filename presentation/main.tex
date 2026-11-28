@@ -1,6 +1,7 @@
 \documentclass{beamer}
 \input{FrontMatter/preamble.tex}
 \usetheme{ULB}
+\usetikzlibrary{positioning, arrows.meta, fit, backgrounds}
 
 \setcounter{FootlineChoice}{1}
 
@@ -47,16 +48,238 @@ and ObjectBox}
     \vfill
 \end{frame}
 
+% ====================================================================
+% Foundations of Object-Oriented Databases (~5 min)
+% ====================================================================
+
 \begin{frame}{Origins and motivation}
+    Applications are written with \textbf{object-oriented languages}, but data is stored in \textbf{relational tables}
+    $\Rightarrow$ the \textbf{object-relational impedance mismatch}.
+
+    \vspace{0.3em}
+    \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
+            \textbf{Object}
+            \begin{itemize}\small
+                \item Has its own \textbf{identity}, separate from its values
+                \item Two identical objects are still two objects
+                \item Links are \textbf{pointers}: follow them in one step
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \textbf{Row}
+            \begin{itemize}\small
+                \item Identified by its \textbf{primary key}, which is part of the data
+                \item Change the key $\rightarrow$ it's a different row
+                \item Links are \textbf{foreign keys}, rebuilt by \textbf{joins}
+            \end{itemize}
+        \end{column}
+    \end{columns}
+
+    \vspace{-0.2em}
+    \begin{center}
+        \begin{tikzpicture}[
+                font=\scriptsize,
+                obj/.style={draw, rounded corners, align=center, inner sep=2pt,
+                minimum width=1.5cm, minimum height=0.5cm, fill=blue_hl_bg_1!40},
+                ptr/.style={-{Stealth[length=1.6mm]}, thick, blue_hl_bg_2},
+                match/.style={-{Stealth[length=1.6mm]}, dashed, gray!70!black},
+                tbl/.style={draw, inner sep=2pt, font=\scriptsize\ttfamily, minimum width=3.6cm}
+            ]
+            % object graph
+            \node[obj] (cust)  at (0,0)      {\texttt{Customer}};
+            \node[obj] (order) at (0,-0.9)   {\texttt{Order}};
+            \node[obj] (l1)    at (-0.9,-1.8){\texttt{Line}};
+            \node[obj] (l2)    at ( 0.9,-1.8){\texttt{Line}};
+            \draw[ptr] (order) -- (cust);
+            \draw[ptr] (order) -- (l1);
+            \draw[ptr] (order) -- (l2);
+            \node[font=\scriptsize\itshape] at (0,-2.45) {links are references};
+
+            % tables
+            \node[tbl] (tcust) at (5.2,0)    {customers(id, name)};
+            \node[tbl] (tord)  at (5.2,-0.9) {orders(id, customer\_id)};
+            \node[tbl] (tline) at (5.2,-1.8) {lines(id, order\_id)};
+            \draw[match] (tord.east)  to[bend right=40] node[right] {join} (tcust.east);
+            \draw[match] (tline.east) to[bend right=40] node[right] {join} (tord.east);
+            \node[font=\scriptsize\itshape] at (5.2,-2.45) {links are matching values};
+        \end{tikzpicture}
+    \end{center}
 \end{frame}
 
-\begin{frame}{Fundamental Principles of OODBMS}
+\begin{frame}{Origins and motivation: the translation layer}
+    \textbf{Other OO features with no relational equivalent:}
+    \begin{itemize}\small
+        \item \textbf{Inheritance} $\rightarrow$ flattened onto tables (storage space vs.\ query speed)
+        \item \textbf{Collections} $\rightarrow$ moved to separate tables (one value per column)
+    \end{itemize}
+
+    \vspace{0.3em}
+    \begin{center}
+        \begin{tikzpicture}[
+                font=\scriptsize,
+                box/.style={draw, rounded corners, align=center, minimum height=0.75cm,
+                minimum width=2.1cm, inner sep=3pt},
+                app/.style={box, fill=blue_hl_bg_1!50},
+                map/.style={box, fill=red!12, dashed},
+                db/.style={box, fill=gray!15},
+                arr/.style={{Stealth[length=1.6mm]}-{Stealth[length=1.6mm]}, thick}
+            ]
+            \node[app] (a1) at (0,0)   {Application\\objects};
+            \node[map] (m1) at (3,0)   {Hand-written\\mapping / ORM};
+            \node[db]  (d1) at (6,0)   {Relational\\tables};
+            \draw[arr] (a1) -- (m1);
+            \draw[arr] (m1) -- (d1);
+
+            \node[app] (a2) at (0,-1.2) {Application\\objects};
+            \node[db]  (d2) at (6,-1.2) {Object\\database};
+            \draw[arr, blue_hl_bg_2] (a2) -- node[above, font=\scriptsize\itshape] {stored as they are} (d2);
+        \end{tikzpicture}
+    \end{center}
+
+    \vspace{0.2em}
+    \begin{block}{The mapping layer}
+        \small
+        Belongs neither to the application nor to the database, must be kept in step with the schema,
+        and brings its own problems: \textbf{loading too much data}, or \textbf{one query per collection element}.
+    \end{block}
+
+    \begin{center}
+        \textbf{OODBMS: store objects directly $\Rightarrow$ the middle layer disappears.}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Fundamental Principles of OODBMS (1/2)}
+    \small
+    \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
+            \begin{block}{Object identity (OID)}
+                Assigned by the database, unique, never changes.
+                Independent of the values: what a primary key cannot provide.
+            \end{block}
+            \begin{block}{Inheritance}
+                The class hierarchy is part of the stored schema, no mapping strategy needed
+                (not used in our model).
+            \end{block}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{block}{Complex objects}
+                Attributes can hold other objects, lists, sets or maps, nested arbitrarily.
+                The structure is stored as the application sees it.
+            \end{block}
+            \begin{block}{References}
+                Relationships are stored as references. Following one is a direct jump:
+                \textbf{no join needed}.
+            \end{block}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Fundamental Principles of OODBMS (2/2)}
+    \small
+    \begin{columns}[c]
+        \begin{column}{0.52\textwidth}
+            \begin{block}{Persistence by reachability}
+                Saving an object saves everything it can reach, recursively.
+                A whole structure is stored in \textbf{one operation}.
+            \end{block}
+        \end{column}
+        \begin{column}{0.44\textwidth}
+            \centering
+            \begin{tikzpicture}[
+                    font=\scriptsize,
+                    obj/.style={draw, rounded corners, align=center, inner sep=2pt,
+                    minimum width=1.4cm, minimum height=0.5cm, fill=blue_hl_bg_1!40},
+                    root/.style={obj, fill=blue_hl_bg_2, text=white, very thick},
+                    ptr/.style={-{Stealth[length=1.6mm]}, thick}
+                ]
+                \node[root] (order) at (0,0)       {\texttt{Order}};
+                \node[obj]  (cust)  at (-1,-1)     {\texttt{Customer}};
+                \node[obj]  (line)  at (1,-1)      {\texttt{Line}};
+                \node[obj]  (prod)  at (1,-1.9)    {\texttt{Product}};
+                \draw[ptr] (order) -- (cust);
+                \draw[ptr] (order) -- (line);
+                \draw[ptr] (line)  -- (prod);
+                \node[anchor=west, font=\scriptsize\itshape] at (0.75,0) {\texttt{persist()}};
+                \begin{scope}[on background layer]
+                    \node[draw, dashed, rounded corners, inner sep=5pt,
+                    fit=(cust)(line)(prod)] (reach) {};
+                \end{scope}
+                \node[anchor=north, font=\scriptsize\itshape] at (reach.south) {stored too};
+            \end{tikzpicture}
+        \end{column}
+    \end{columns}
+
+    \vspace{0.1em}
+    \begin{block}{Navigation \emph{and} declarative queries}
+        \textbf{Navigation:} start from an object, follow its references.\\
+        \textbf{Queries:} describe a condition, the database finds the matches.\\
+        Relational databases only offer queries; OODBMS offer both.
+    \end{block}
+
+    \begin{block}{Transparent persistence}
+        A loaded object is an ordinary language object, ready to use. Modifying it inside a
+        transaction is enough to store the change: \textbf{no translation layer}.
+    \end{block}
 \end{frame}
 
 \begin{frame}{Standards and norms}
+    \begin{center}
+        \begin{tikzpicture}[
+                font=\scriptsize,
+                dot/.style={circle, fill=blue_hl_bg_2, inner sep=2.2pt},
+                lbl/.style={align=center, text width=1.6cm, anchor=north}
+            ]
+            \draw[thick, -{Stealth[length=2mm]}, blue_hl_bg_2] (-0.4,0) -- (8.8,0);
+            \foreach \x/\y/\lab in {0/1989/{OODB\\Manifesto},
+                                  2.1/1991/{ODMG\\founded},
+                                  4.2/2000/{ODMG 3.0\\(ODL, OQL)},
+                                  6.3/2001/{Java binding\\$\rightarrow$ JDO},
+                                  8.4/2006/{JPA\\succeeds JDO}} {
+                \node[dot] at (\x,0) {};
+                \node[above=3pt, font=\scriptsize\bfseries] at (\x,0) {\y};
+                \node[lbl] at (\x,-0.2) {\lab};
+            }
+        \end{tikzpicture}
+    \end{center}
+
+    \vspace{0.6em}
+    \begin{itemize}
+        \item The \textbf{Manifesto} defines what an OODB is: object features + usual database features
+        \item \textbf{ODMG} tries to standardise it\ldots{} then disbands, its Java part ends up in JPA
+    \end{itemize}
+
+    \vspace{0.6em}
+    \begin{alertblock}{Main point: no common standard today}
+        \textbf{ObjectDB} uses JPA (an API, not a storage model), \textbf{ObjectBox} has its own API.\\
+        $\Rightarrow$ Code written for one cannot be moved to the other.
+    \end{alertblock}
 \end{frame}
 
 \begin{frame}{Relational Model vs. Object-Oriented Model}
+    \small
+    \renewcommand{\arraystretch}{1.3}
+    \begin{center}
+        \begin{tabularx}{\textwidth}{|>{\bfseries}l|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+            \hline
+            & \textbf{Relational} & \textbf{Object-oriented} \\
+            \hline
+            Data model       & tables of rows, atomic values  & objects with attributes \& collections \\
+            \hline
+            Identity         & primary key from the data      & identifier assigned by the system \\
+            \hline
+            Relationships    & foreign keys, rebuilt by joins & references, followed in one step \\
+            \hline
+            Inheritance      & mapped onto tables             & part of the stored schema \\
+            \hline
+            Query language   & SQL, standard \& universal     & specific to each product \\
+            \hline
+            Schema evolution & mature tooling, migrations     & depends on the product \\
+            \hline
+            Ecosystem        & very large                     & small \\
+            \hline
+        \end{tabularx}
+    \end{center}
 \end{frame}
 
 \begin{frame}
